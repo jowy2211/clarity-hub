@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="384" height="384" viewBox="0 0 384 384" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3.84" stdDeviation="3.84" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="384" height="384" fill="url(#grad)"/>
+  
+  <!-- Border -->
+  <rect x="0" y="0" width="384" height="384" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="7.68"/>
+  
+  <!-- Text "Clarity" -->
+  <text 
+    x="50%" 
+    y="161.28" 
+    font-family="system-ui, -apple-system, sans-serif" 
+    font-size="84.48" 
+    font-weight="bold" 
+    fill="white" 
+    text-anchor="middle" 
+    dominant-baseline="middle"
+    filter="url(#shadow)">Clarity</text>
+  
+  <!-- Text "Hub" -->
+  <text 
+    x="50%" 
+    y="238.07999999999998" 
+    font-family="system-ui, -apple-system, sans-serif" 
+    font-size="84.48" 
+    font-weight="bold" 
+    fill="white" 
+    text-anchor="middle" 
+    dominant-baseline="middle"
+    filter="url(#shadow)">Hub</text>
+</svg>

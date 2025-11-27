@@ -8,7 +8,6 @@ import {
   Cpu,
   Database,
   FileCode,
-  Home,
   Layers,
   Lock,
   Package,
@@ -19,7 +18,6 @@ import {
   Wallet,
   Zap,
 } from 'lucide-react';
-import Link from 'next/link';
 
 import PageTransition from '@/components/layout/PageTransition';
 
@@ -126,14 +124,6 @@ export default function TechStack() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-10 sm:mb-14"
           >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-stone-600 hover:text-stone-800 mb-6 transition font-medium"
-            >
-              <Home className="w-5 h-5" />
-              <span>Kembali ke Home</span>
-            </Link>
-            
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-stone-800 mb-4 tracking-tight">
               Tech Stack
             </h1>

@@ -47,14 +47,14 @@ export default function FloatingQuickNav() {
       {/* Fixed button only (no drag), allow interactions only on the button/menu */}
       <motion.div
         whileTap={{ scale: 0.98 }}
-        className="absolute bottom-10 left-5 pointer-events-auto"
+        className="absolute bottom-10 left-5"
       >
         {/* Main FAB */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setOpen((v) => !v)}
           aria-label="Quick Navigation"
-          className="w-14 h-14 bg-stone-100 text-stone-700 rounded-lg border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 shadow-lg flex items-center justify-center"
+          className="pointer-events-auto w-14 h-14 bg-stone-100 text-stone-700 rounded-lg border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 shadow-lg flex items-center justify-center"
         >
           {open ? (
             <span className="font-extrabold text-xl">×</span>
@@ -68,7 +68,8 @@ export default function FloatingQuickNav() {
           initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={open ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
           transition={prefersReducedMotion ? { duration: 0.12 } : { type: 'spring', stiffness: 380, damping: 30 }}
-          className="absolute bottom-16 left-0 bg-stone-50/95 backdrop-blur-sm rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-3 shadow-lg"
+          className="pointer-events-auto absolute bottom-16 left-0 bg-stone-50/95 backdrop-blur-sm rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-3 shadow-lg"
+          style={{ display: open ? 'block' : 'none' }}
         >
           <div className="flex flex-col gap-2 min-w-[180px]">
             <motion.button

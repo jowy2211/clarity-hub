@@ -66,10 +66,10 @@ export const metadata: Metadata = {
     description: 'Focus deeply, organize tasks, track spending—all in one place',
   },
   icons: {
-    icon: '/assets/images/favicon.ico',
+    icon: '/favicon.svg',
     apple: [
-      { url: '/icons/icon-192x192.png' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512' },
+      { url: '/icons/icon-192x192.svg' },
+      { url: '/icons/icon-512x512.svg', sizes: '512x512' },
     ],
   },
 };
