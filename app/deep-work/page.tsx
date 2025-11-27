@@ -488,7 +488,7 @@ function DeepWorkContent() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const presetDurations = [1, 15, 25, 30, 45, 50, 60];
+  const presetDurations = [15, 25, 30, 45, 50, 60];
 
   const progress = ((duration * 60 - timeLeft) / (duration * 60)) * 100;
 
