@@ -10,6 +10,10 @@ export default withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  // Import custom service worker for background notifications
+  sw: 'sw.js',
+  // Inject custom code into service worker
+  additionalManifestEntries: [{ url: '/custom-sw.js', revision: null }],
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,

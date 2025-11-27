@@ -286,12 +286,18 @@ export const initializePWA = async (): Promise<void> => {
     }
 
     // Register for background sync if available
-    if (
-      'serviceWorker' in navigator &&
-      'sync' in (window as any).registration
-    ) {
-      const registration = await navigator.serviceWorker.ready;
-      // Background sync setup can be added here
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+
+        // Check if Background Sync API is available
+        if ('sync' in registration) {
+          // Background sync setup can be added here
+          console.log('[PWA] Background Sync API available');
+        }
+      } catch (error) {
+        console.warn('[PWA] Service Worker not available:', error);
+      }
     }
   } catch (error) {
     console.error('Failed to initialize PWA:', error);

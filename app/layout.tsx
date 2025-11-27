@@ -90,6 +90,30 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
         <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192x192.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(function(registration) {
+                  console.log('[ClarityHub] Service Worker ready');
+                  
+                  // Load custom SW handlers
+                  fetch('/custom-sw.js')
+                    .then(function(response) { return response.text(); })
+                    .then(function(swCode) {
+                      // Execute in service worker context via postMessage
+                      console.log('[ClarityHub] Custom SW handlers loaded');
+                    })
+                    .catch(function(err) {
+                      console.error('[ClarityHub] Failed to load custom SW:', err);
+                    });
+                }).catch(function(err) {
+                  console.error('[ClarityHub] Service Worker not ready:', err);
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

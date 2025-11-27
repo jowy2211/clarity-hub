@@ -37,6 +37,12 @@ import {
   safeSetLocalStorage,
   safeShowNotification,
 } from '@/lib/utils/pwa-safe';
+import {
+  notifyBreakStarted,
+  notifyBreakStopped,
+  notifyTimerStarted,
+  notifyTimerStopped,
+} from '@/lib/utils/sw-messages';
 
 interface FocusSession {
   id: number;
@@ -213,6 +219,9 @@ function DeepWorkContent() {
       };
       safeSetLocalStorage('active-timer', timerState);
 
+      // Notify service worker for background notifications
+      notifyTimerStarted(meaning, endTime);
+
       // Update every second based on endTime
       intervalRef.current = setInterval(() => {
         const now = Date.now();
@@ -336,6 +345,8 @@ function DeepWorkContent() {
     setShowSetup(true);
     // Remove active timer from localStorage
     safeRemoveLocalStorage('active-timer');
+    // Notify service worker to cancel scheduled notification
+    notifyTimerStopped();
   };
 
   // Break timer functions
@@ -354,6 +365,9 @@ function DeepWorkContent() {
       endTime: endTime,
     };
     safeSetLocalStorage('active-break-timer', breakTimerState);
+    
+    // Notify service worker for background notifications
+    notifyBreakStarted(isLongBreak, endTime);
   };
 
   const skipBreak = () => {
@@ -367,6 +381,9 @@ function DeepWorkContent() {
     
     // Remove break timer from localStorage
     safeRemoveLocalStorage('active-break-timer');
+    
+    // Notify service worker to cancel scheduled notification
+    notifyBreakStopped();
   };
 
   const handleBreakComplete = () => {

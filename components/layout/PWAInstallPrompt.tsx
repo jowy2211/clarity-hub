@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { initializePWA } from '@/lib/utils/pwa-safe';
+import { registerCustomSW } from '@/lib/utils/sw-messages';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -29,6 +30,22 @@ export default function PWAInstallPrompt() {
   useEffect(() => {
     // Initialize PWA features when app loads
     initializePWA();
+    
+    // Register custom service worker for background notifications
+    registerCustomSW();
+    
+    // Load custom SW handlers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        // Import custom SW logic by loading the script
+        fetch('/custom-sw.js')
+          .then(response => response.text())
+          .then(swCode => {
+            console.log('[PWA] Custom SW handlers ready');
+          })
+          .catch(err => console.error('[PWA] Failed to load custom SW:', err));
+      });
+    }
     
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
