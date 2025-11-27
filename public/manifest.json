@@ -11,6 +11,18 @@
   "categories": ["productivity", "lifestyle", "finance"],
   "lang": "id-ID",
   "dir": "ltr",
+  "prefer_related_applications": false,
+  "permissions": ["notifications", "vibrate"],
+  "features": [
+    {
+      "name": "notifications",
+      "description": "Show timer completion notifications"
+    },
+    {
+      "name": "vibrate",
+      "description": "Vibrate on timer completion"
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-72x72.png",

@@ -11,6 +11,7 @@ import FloatingQuickNav from '@/components/layout/FloatingQuickNav';
 import FloatingTimer from '@/components/layout/FloatingTimer';
 import Footer from '@/components/layout/Footer';
 import PWAInstallPrompt from '@/components/layout/PWAInstallPrompt';
+import { PWAErrorBoundary } from '@/components/PWAErrorBoundary';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -93,12 +94,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <FloatingTimer />
-        <FloatingQuickNav />
-        <Footer />
-        <CookieBanner />
-        <PWAInstallPrompt />
+        <PWAErrorBoundary>
+          {children}
+          <FloatingTimer />
+          <FloatingQuickNav />
+          <Footer />
+          <CookieBanner />
+          <PWAInstallPrompt />
+        </PWAErrorBoundary>
       </body>
     </html>
   );

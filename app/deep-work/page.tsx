@@ -28,6 +28,15 @@ import {
 
 import PageTransition from '@/components/layout/PageTransition';
 import { DeepWorkSkeleton } from '@/components/ui/SkeletonLoader';
+import {
+  initializePWA,
+  safeGetLocalStorage,
+  safePlayAlarm,
+  safeRemoveLocalStorage,
+  safeRequestNotification,
+  safeSetLocalStorage,
+  safeShowNotification,
+} from '@/lib/utils/pwa-safe';
 
 interface FocusSession {
   id: number;
@@ -74,34 +83,30 @@ function DeepWorkContent() {
 
   // Load existing timer state on mount
   useEffect(() => {
+    // Initialize PWA features
+    initializePWA();
+    
     // Load pomodoro count first
-    const savedPomodoroData = localStorage.getItem('pomodoro-data');
-    if (savedPomodoroData) {
-      try {
-        const data = JSON.parse(savedPomodoroData);
-        const today = new Date().toDateString();
-        if (data.date === today) {
-          setPomodoroCount(data.cycleCount || 0);
-          setDailyPomodoroCount(data.dailyCount || 0);
-        } else {
-          // Reset for new day
-          localStorage.setItem('pomodoro-data', JSON.stringify({
-            date: today,
-            cycleCount: 0,
-            dailyCount: 0,
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to parse pomodoro data:', error);
+    const data = safeGetLocalStorage<any>('pomodoro-data', null);
+    if (data) {
+      const today = new Date().toDateString();
+      if (data.date === today) {
+        setPomodoroCount(data.cycleCount || 0);
+        setDailyPomodoroCount(data.dailyCount || 0);
+      } else {
+        // Reset for new day
+        safeSetLocalStorage('pomodoro-data', {
+          date: today,
+          cycleCount: 0,
+          dailyCount: 0,
+        });
       }
     }
 
     // Then load timer state
-    const savedTimer = localStorage.getItem('active-timer');
-    if (savedTimer) {
-      try {
-        const state = JSON.parse(savedTimer);
-        if (state.isRunning && !state.isPaused && state.endTime) {
+    const state = safeGetLocalStorage<any>('active-timer', null);
+    if (state) {
+      if (state.isRunning && !state.isPaused && state.endTime) {
           // Calculate actual time left from endTime
           const now = Date.now();
           const remaining = Math.max(0, Math.floor((state.endTime - now) / 1000));
@@ -129,43 +134,32 @@ function DeepWorkContent() {
           setIsPaused(true);
           setShowSetup(false);
         }
-      } catch (error) {
-        console.error('Failed to load timer state:', error);
-      }
     }
 
     // Load break timer state
-    const savedBreakTimer = localStorage.getItem('active-break-timer');
-    if (savedBreakTimer) {
-      try {
-        const state = JSON.parse(savedBreakTimer);
-        if (state.isRunning && state.endTime) {
-          const now = Date.now();
-          const remaining = Math.max(0, Math.floor((state.endTime - now) / 1000));
-          
-          if (remaining > 0) {
-            // Break timer still running
-            setBreakDuration(state.duration);
-            setBreakTimeLeft(remaining);
-            setIsLongBreak(state.isLongBreak);
-            setShowBreakTimer(true);
-            setIsBreakRunning(true);
-          } else {
-            // Break timer finished while user was away
-            localStorage.removeItem('active-break-timer');
-            // Show setup for next pomodoro
-            setShowSetup(true);
-            playAlarm();
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('Break Selesai! ⏰', {
-                body: 'Waktunya lanjut fokus lagi!',
-                icon: '/favicon.ico',
-              });
-            }
-          }
+    const breakState = safeGetLocalStorage<any>('active-break-timer', null);
+    if (breakState) {
+      if (breakState.isRunning && breakState.endTime) {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((breakState.endTime - now) / 1000));
+        
+        if (remaining > 0) {
+          // Break timer still running
+          setBreakDuration(breakState.duration);
+          setBreakTimeLeft(remaining);
+          setIsLongBreak(breakState.isLongBreak);
+          setShowBreakTimer(true);
+          setIsBreakRunning(true);
+        } else {
+          // Break timer finished while user was away
+          safeRemoveLocalStorage('active-break-timer');
+          // Show setup for next pomodoro
+          setShowSetup(true);
+          safePlayAlarm();
+          safeShowNotification('Break Selesai! ⏰', {
+            body: 'Waktunya lanjut fokus lagi!',
+          });
         }
-      } catch (error) {
-        console.error('Failed to load break timer state:', error);
       }
     }
   }, []);
@@ -177,14 +171,8 @@ function DeepWorkContent() {
 
   // Load sessions from localStorage
   useEffect(() => {
-    const savedSessions = localStorage.getItem('deepwork-sessions');
-    if (savedSessions) {
-      try {
-        setSessions(JSON.parse(savedSessions));
-      } catch (error) {
-        console.error('Failed to parse sessions:', error);
-      }
-    }
+    const savedSessions = safeGetLocalStorage<FocusSession[]>('deepwork-sessions', []);
+    setSessions(savedSessions);
     setIsSessionsInitialized(true);
 
     // Check if meaning is passed from todo list
@@ -197,18 +185,17 @@ function DeepWorkContent() {
   // Save sessions to localStorage (but not on initial mount)
   useEffect(() => {
     if (isSessionsInitialized) {
-      localStorage.setItem('deepwork-sessions', JSON.stringify(sessions));
+      safeSetLocalStorage('deepwork-sessions', sessions);
     }
   }, [sessions, isSessionsInitialized]);
 
   // Timer logic - timestamp-based for perfect sync
   useEffect(() => {
     if (isRunning && !isPaused) {
-      const savedTimer = localStorage.getItem('active-timer');
+      const state = safeGetLocalStorage<any>('active-timer', null);
       let endTime: number;
       
-      if (savedTimer) {
-        const state = JSON.parse(savedTimer);
+      if (state && state.endTime) {
         endTime = state.endTime;
       } else {
         // First time starting - calculate end time
@@ -224,7 +211,7 @@ function DeepWorkContent() {
         endTime, // Store when timer should finish
         startedAt: Date.now(),
       };
-      localStorage.setItem('active-timer', JSON.stringify(timerState));
+      safeSetLocalStorage('active-timer', timerState);
 
       // Update every second based on endTime
       intervalRef.current = setInterval(() => {
@@ -247,7 +234,7 @@ function DeepWorkContent() {
         isPaused: true,
         startedAt: Date.now(),
       };
-      localStorage.setItem('active-timer', JSON.stringify(timerState));
+      safeSetLocalStorage('active-timer', timerState);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -278,10 +265,10 @@ function DeepWorkContent() {
     setIsPaused(false);
     
     // Remove active timer from localStorage
-    localStorage.removeItem('active-timer');
+    safeRemoveLocalStorage('active-timer');
     
     // Play alarm sound
-    playAlarm();
+    safePlayAlarm();
     
     // Increment pomodoro counters
     const newCycleCount = (pomodoroCount + 1) % 4; // 0-3 cycle
@@ -292,25 +279,22 @@ function DeepWorkContent() {
     
     // Save pomodoro data
     const today = new Date().toDateString();
-    localStorage.setItem('pomodoro-data', JSON.stringify({
+    safeSetLocalStorage('pomodoro-data', {
       date: today,
       cycleCount: newCycleCount,
       dailyCount: newDailyCount,
-    }));
+    });
     
     // Determine break type: long break after 4th pomodoro
     const isLongBreakTime = newCycleCount === 0 && newDailyCount > 0;
     setIsLongBreak(isLongBreakTime);
     
     // Show browser notification
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(`Pomodoro ${pomodoroCount + 1} Selesai!`, {
-        body: isLongBreakTime 
-          ? `4 pomodoro selesai! Waktunya long break.` 
-          : `Selesai: ${meaning}. Waktunya istirahat sebentar!`,
-        icon: '/favicon.ico',
-      });
-    }
+    safeShowNotification(`Pomodoro ${pomodoroCount + 1} Selesai!`, {
+      body: isLongBreakTime 
+        ? `4 pomodoro selesai! Waktunya long break.` 
+        : `Selesai: ${meaning}. Waktunya istirahat sebentar!`,
+    });
 
     // Save session to history
     const session: FocusSession = {
@@ -328,38 +312,13 @@ function DeepWorkContent() {
     setBreakTimeLeft(breakTime * 60);
   };
 
-  const playAlarm = () => {
-    // Create simple beep sound using Web Audio API
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 1);
-  };
-
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
-  };
-
   const startTimer = () => {
     if (!meaning.trim()) {
       alert('Tulis dulu apa yang mau kamu kerjakan!');
       return;
     }
     
-    requestNotificationPermission();
+    safeRequestNotification();
     setTimeLeft(duration * 60);
     setIsRunning(true);
     setIsPaused(false);
@@ -376,7 +335,7 @@ function DeepWorkContent() {
     setTimeLeft(duration * 60);
     setShowSetup(true);
     // Remove active timer from localStorage
-    localStorage.removeItem('active-timer');
+    safeRemoveLocalStorage('active-timer');
   };
 
   // Break timer functions
@@ -394,7 +353,7 @@ function DeepWorkContent() {
       isLongBreak: isLongBreak,
       endTime: endTime,
     };
-    localStorage.setItem('active-break-timer', JSON.stringify(breakTimerState));
+    safeSetLocalStorage('active-break-timer', breakTimerState);
   };
 
   const skipBreak = () => {
@@ -407,23 +366,20 @@ function DeepWorkContent() {
     setIsBreakRunning(false);
     
     // Remove break timer from localStorage
-    localStorage.removeItem('active-break-timer');
+    safeRemoveLocalStorage('active-break-timer');
   };
 
   const handleBreakComplete = () => {
     setIsBreakRunning(false);
     
     // Remove break timer from localStorage
-    localStorage.removeItem('active-break-timer');
+    safeRemoveLocalStorage('active-break-timer');
     
-    playAlarm();
+    safePlayAlarm();
     
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Break Selesai! ⏰', {
-        body: 'Waktunya lanjut fokus lagi!',
-        icon: '/favicon.ico',
-      });
-    }
+    safeShowNotification('Break Selesai! ⏰', {
+      body: 'Waktunya lanjut fokus lagi!',
+    });
     
     // Langsung ke setup pomodoro berikutnya tanpa reset counter
     setTimeout(() => {
@@ -439,11 +395,10 @@ function DeepWorkContent() {
   // Break timer countdown - timestamp-based
   useEffect(() => {
     if (isBreakRunning) {
-      const savedBreakTimer = localStorage.getItem('active-break-timer');
+      const state = safeGetLocalStorage<any>('active-break-timer', null);
       let endTime: number;
       
-      if (savedBreakTimer) {
-        const state = JSON.parse(savedBreakTimer);
+      if (state && state.endTime) {
         endTime = state.endTime;
       } else {
         // First time starting - calculate end time
@@ -455,7 +410,7 @@ function DeepWorkContent() {
           isLongBreak: isLongBreak,
           endTime: endTime,
         };
-        localStorage.setItem('active-break-timer', JSON.stringify(breakTimerState));
+        safeSetLocalStorage('active-break-timer', breakTimerState);
       }
 
       // Update every second based on endTime
@@ -522,7 +477,7 @@ function DeepWorkContent() {
     setIsRunning(true);
     setIsPaused(false);
     setShowSetup(false);
-    requestNotificationPermission();
+    safeRequestNotification();
   };
 
   if (isLoading) {

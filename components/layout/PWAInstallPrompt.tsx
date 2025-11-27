@@ -14,6 +14,8 @@ import {
   X,
 } from 'lucide-react';
 
+import { initializePWA } from '@/lib/utils/pwa-safe';
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -25,6 +27,9 @@ export default function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Initialize PWA features when app loads
+    initializePWA();
+    
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
