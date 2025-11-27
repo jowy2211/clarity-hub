@@ -83,7 +83,7 @@ export default function FloatingTimer() {
     router.push('/deep-work');
   };
 
-  // Load timer state from localStorage
+  // Load timer state from localStorage with continuous polling
   useEffect(() => {
     const loadTimerState = () => {
       const state = getLocalStorage<TimerState | null>(STORAGE_KEYS.ACTIVE_TIMER, null);
@@ -115,21 +115,15 @@ export default function FloatingTimer() {
     // Load initial state
     loadTimerState();
 
-    // Only poll if there's an active timer
-    let checkInterval: NodeJS.Timeout | null = null;
-    const saved = getLocalStorage<TimerState | null>(STORAGE_KEYS.ACTIVE_TIMER, null);
-    if (saved) {
-      checkInterval = setInterval(loadTimerState, 100);
-    }
+    // Always poll to detect new timers from other pages
+    const checkInterval = setInterval(loadTimerState, 500); // Check every 500ms
 
     return () => {
-      if (checkInterval) {
-        clearInterval(checkInterval);
-      }
+      clearInterval(checkInterval);
     };
-  }, [timerState?.isRunning]);
+  }, []); // Empty dependency - always run polling
 
-  // Load break timer state from localStorage
+  // Load break timer state from localStorage with continuous polling
   useEffect(() => {
     const loadBreakTimerState = () => {
       const state = getLocalStorage<BreakTimerState | null>(STORAGE_KEYS.ACTIVE_BREAK_TIMER, null);
@@ -159,19 +153,13 @@ export default function FloatingTimer() {
     // Load initial state
     loadBreakTimerState();
 
-    // Only poll if there's an active break timer
-    let checkInterval: NodeJS.Timeout | null = null;
-    const saved = getLocalStorage<BreakTimerState | null>(STORAGE_KEYS.ACTIVE_BREAK_TIMER, null);
-    if (saved) {
-      checkInterval = setInterval(loadBreakTimerState, 100);
-    }
+    // Always poll to detect new break timers from other pages
+    const checkInterval = setInterval(loadBreakTimerState, 500); // Check every 500ms
 
     return () => {
-      if (checkInterval) {
-        clearInterval(checkInterval);
-      }
+      clearInterval(checkInterval);
     };
-  }, [breakTimerState?.isRunning]);
+  }, []); // Empty dependency - always run polling
 
   // No local countdown - just rely on polling localStorage
   useEffect(() => {
