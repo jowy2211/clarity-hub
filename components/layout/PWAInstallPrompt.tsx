@@ -116,7 +116,7 @@ export default function PWAInstallPrompt() {
               <Download className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-lg mb-1">Install ClarityHub</h3>
+              <h3 className="font-bold text-black text-lg mb-1">Install ClarityHub</h3>
               <p className="text-sm text-gray-600">
                 Add to your home screen for quick access and offline use
               </p>
