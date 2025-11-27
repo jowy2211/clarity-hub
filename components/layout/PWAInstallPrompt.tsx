@@ -1,17 +1,17 @@
 "use client";
 
 import {
-    useEffect,
-    useState,
+  useEffect,
+  useState,
 } from 'react';
 
 import {
-    AnimatePresence,
-    motion,
+  AnimatePresence,
+  motion,
 } from 'framer-motion';
 import {
-    Download,
-    X,
+  Download,
+  X,
 } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -126,7 +126,7 @@ export default function PWAInstallPrompt() {
           <div className="flex gap-2.5">
             <button
               onClick={handleDismiss}
-              className="flex-1 px-4 py-3 bg-stone-100 border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 rounded-xl font-medium hover:bg-stone-200 active:translate-y-1 active:border-b-2 active:border-r-2 transition-all"
+              className="flex-1 px-4 py-3 bg-stone-100 text-black border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 rounded-xl font-medium hover:bg-stone-200 active:translate-y-1 active:border-b-2 active:border-r-2 transition-all"
             >
               Not Now
             </button>
