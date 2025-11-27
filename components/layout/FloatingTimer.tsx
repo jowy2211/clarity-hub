@@ -57,6 +57,30 @@ export default function FloatingTimer() {
     if (hasCompletedRef.current) return; // Prevent double execution
     hasCompletedRef.current = true;
 
+    // Update pomodoro counter in localStorage IMMEDIATELY
+    const pomodoroData = getLocalStorage<any>(STORAGE_KEYS.POMODORO_DATA, null);
+    const today = new Date().toDateString();
+    
+    let newCycleCount = 0;
+    let newDailyCount = 1;
+    
+    if (pomodoroData && pomodoroData.date === today) {
+      // Same day - increment counters
+      newCycleCount = ((pomodoroData.cycleCount || 0) + 1) % 4; // 0-3 cycle
+      newDailyCount = (pomodoroData.dailyCount || 0) + 1;
+    } else {
+      // New day - reset to first pomodoro
+      newCycleCount = 1; // First pomodoro of the day
+      newDailyCount = 1;
+    }
+    
+    // Save updated counter to localStorage BEFORE user clicks continue
+    localStorage.setItem(STORAGE_KEYS.POMODORO_DATA, JSON.stringify({
+      date: today,
+      cycleCount: newCycleCount,
+      dailyCount: newDailyCount,
+    }));
+
     // Play alarm
     safePlayAlarm();
 
@@ -223,6 +247,7 @@ export default function FloatingTimer() {
         shouldStartBreak: true,
         isLongBreak: isLongBreak,
         duration: breakDuration,
+        timestamp: Date.now(), // Add timestamp to track freshness
       };
       localStorage.setItem(STORAGE_KEYS.START_BREAK_TIMER, JSON.stringify(startBreakFlag));
     }

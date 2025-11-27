@@ -63,23 +63,29 @@ function DeepWorkContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [meaning, setMeaning] = useState("");
-  const [duration, setDuration] = useState(25); // minutes
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // seconds
-  const [sessions, setSessions] = useState<FocusSession[]>([]);
-  const [showSetup, setShowSetup] = useState(true);
+  // UI-only states (safe to use useState - tidak mempengaruhi fungsional)
   const [isLoading, setIsLoading] = useState(true);
   const [isSessionsInitialized, setIsSessionsInitialized] = useState(false);
-  const [showBreakTimer, setShowBreakTimer] = useState(false);
-  const [breakDuration, setBreakDuration] = useState(5); // minutes
-  const [breakTimeLeft, setBreakTimeLeft] = useState(5 * 60); // seconds
-  const [isBreakRunning, setIsBreakRunning] = useState(false);
   
-  // Pomodoro cycle tracking
-  const [pomodoroCount, setPomodoroCount] = useState(0); // Current cycle position (0-3)
-  const [dailyPomodoroCount, setDailyPomodoroCount] = useState(0); // Total today
+  /**
+   * IMPORTANT: Functional states below sync with localStorage
+   * localStorage adalah single source of truth untuk data fungsional
+   * useState hanya untuk UI rendering - data actual tersimpan di localStorage
+   * Ini memastikan data tidak hilang saat refresh/navigasi
+   */
+  const [meaning, setMeaning] = useState("");
+  const [duration, setDuration] = useState(25);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [sessions, setSessions] = useState<FocusSession[]>([]);
+  const [showSetup, setShowSetup] = useState(true);
+  const [showBreakTimer, setShowBreakTimer] = useState(false);
+  const [breakDuration, setBreakDuration] = useState(5);
+  const [breakTimeLeft, setBreakTimeLeft] = useState(5 * 60);
+  const [isBreakRunning, setIsBreakRunning] = useState(false);
+  const [pomodoroCount, setPomodoroCount] = useState(0);
+  const [dailyPomodoroCount, setDailyPomodoroCount] = useState(0);
   const [isLongBreak, setIsLongBreak] = useState(false);
   const [shouldTriggerCompletion, setShouldTriggerCompletion] = useState(false);
   
@@ -87,27 +93,35 @@ function DeepWorkContent() {
   const breakIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Helper: Get pomodoro data from localStorage (single source of truth)
+  const getPomodoroData = () => {
+    const data = safeGetLocalStorage<any>('pomodoro-data', null);
+    const today = new Date().toDateString();
+    if (data && data.date === today) {
+      return { cycleCount: data.cycleCount || 0, dailyCount: data.dailyCount || 0 };
+    }
+    return { cycleCount: 0, dailyCount: 0 };
+  };
+
+  // Helper: Save pomodoro data to localStorage (single source of truth)
+  const savePomodoroData = (cycleCount: number, dailyCount: number) => {
+    const today = new Date().toDateString();
+    safeSetLocalStorage('pomodoro-data', {
+      date: today,
+      cycleCount,
+      dailyCount,
+    });
+  };
+
   // Load existing timer state on mount
   useEffect(() => {
     // Initialize PWA features
     initializePWA();
     
-    // Load pomodoro count first
-    const data = safeGetLocalStorage<any>('pomodoro-data', null);
-    if (data) {
-      const today = new Date().toDateString();
-      if (data.date === today) {
-        setPomodoroCount(data.cycleCount || 0);
-        setDailyPomodoroCount(data.dailyCount || 0);
-      } else {
-        // Reset for new day
-        safeSetLocalStorage('pomodoro-data', {
-          date: today,
-          cycleCount: 0,
-          dailyCount: 0,
-        });
-      }
-    }
+    // Load pomodoro count from localStorage
+    const pomodoroData = getPomodoroData();
+    setPomodoroCount(pomodoroData.cycleCount);
+    setDailyPomodoroCount(pomodoroData.dailyCount);
 
     // Then load timer state
     const state = safeGetLocalStorage<any>('active-timer', null);
@@ -145,14 +159,21 @@ function DeepWorkContent() {
     // Check if should start break timer (from FloatingTimer completion)
     const startBreakFlag = safeGetLocalStorage<any>('start-break-timer', null);
     if (startBreakFlag && startBreakFlag.shouldStartBreak) {
-      // User clicked "Continue" after pomodoro completion
-      setShowBreakTimer(true);
-      setIsLongBreak(startBreakFlag.isLongBreak);
-      setBreakDuration(startBreakFlag.duration);
-      setBreakTimeLeft(startBreakFlag.duration * 60);
-      setShowSetup(false); // Hide pomodoro setup
+      // Check if flag is fresh (within last 5 seconds) to prevent stale data
+      const isFresh = startBreakFlag.timestamp && (Date.now() - startBreakFlag.timestamp) < 5000;
       
-      // Clear the flag
+      if (isFresh) {
+        // User clicked "Continue" after pomodoro completion
+        setShowBreakTimer(true);
+        setIsLongBreak(startBreakFlag.isLongBreak);
+        setBreakDuration(startBreakFlag.duration);
+        setBreakTimeLeft(startBreakFlag.duration * 60);
+        setShowSetup(false);
+        setIsRunning(false);
+        setIsPaused(false);
+      }
+      
+      // Always clear the flag after reading (fresh or stale)
       safeRemoveLocalStorage('start-break-timer');
     } else {
       // Load break timer state (existing break timer)
@@ -169,11 +190,10 @@ function DeepWorkContent() {
             setIsLongBreak(breakState.isLongBreak);
             setShowBreakTimer(true);
             setIsBreakRunning(true);
-            setShowSetup(false); // Hide pomodoro setup when break timer is running
+            setShowSetup(false);
           } else {
             // Break timer finished while user was away
             safeRemoveLocalStorage('active-break-timer');
-            // Show setup for next pomodoro
             setShowSetup(true);
             safePlayAlarm();
             safeShowNotification('Break Selesai! ⏰', {
@@ -294,27 +314,24 @@ function DeepWorkContent() {
     // Play alarm sound
     safePlayAlarm();
     
-    // Increment pomodoro counters
-    const newCycleCount = (pomodoroCount + 1) % 4; // 0-3 cycle
-    const newDailyCount = dailyPomodoroCount + 1;
+    // Read current counter from localStorage (single source of truth)
+    const currentData = getPomodoroData();
+    const newCycleCount = (currentData.cycleCount + 1) % 4;
+    const newDailyCount = currentData.dailyCount + 1;
     
+    // Update localStorage first
+    savePomodoroData(newCycleCount, newDailyCount);
+    
+    // Then update state for UI
     setPomodoroCount(newCycleCount);
     setDailyPomodoroCount(newDailyCount);
-    
-    // Save pomodoro data
-    const today = new Date().toDateString();
-    safeSetLocalStorage('pomodoro-data', {
-      date: today,
-      cycleCount: newCycleCount,
-      dailyCount: newDailyCount,
-    });
     
     // Determine break type: long break after 4th pomodoro
     const isLongBreakTime = newCycleCount === 0 && newDailyCount > 0;
     setIsLongBreak(isLongBreakTime);
     
     // Show browser notification
-    safeShowNotification(`Pomodoro ${pomodoroCount + 1} Selesai!`, {
+    safeShowNotification(`Pomodoro ${currentData.cycleCount + 1} Selesai!`, {
       body: isLongBreakTime 
         ? `4 pomodoro selesai! Waktunya long break.` 
         : `Selesai: ${meaning}. Waktunya istirahat sebentar!`,
@@ -331,7 +348,7 @@ function DeepWorkContent() {
     
     // Show break timer with smart duration
     setShowBreakTimer(true);
-    const breakTime = isLongBreakTime ? 15 : 5; // 15 min long break, 5 min short break
+    const breakTime = isLongBreakTime ? 15 : 5;
     setBreakDuration(breakTime);
     setBreakTimeLeft(breakTime * 60);
   };

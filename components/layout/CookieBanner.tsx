@@ -4,6 +4,11 @@ import {
   useState,
 } from 'react';
 
+import {
+  CheckCircle2,
+  Lock,
+} from 'lucide-react';
+
 export default function CookieBanner() {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -32,7 +37,8 @@ export default function CookieBanner() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-              🔒 Privasi & Penyimpanan Data Lokal
+              <Lock className="w-5 h-5 text-emerald-600" />
+              Privasi & Penyimpanan Data Lokal
             </h3>
             <div className="text-sm text-gray-700 space-y-2">
               <p className="font-medium">
@@ -44,9 +50,12 @@ export default function CookieBanner() {
                 <li><strong>To-Do List:</strong> Daftar tugas dan status penyelesaian</li>
                 <li><strong>Preferensi:</strong> Pengaturan aplikasi dan preferensi pengguna</li>
               </ul>
-              <p className="font-semibold text-gray-800 mt-3">
-                ✅ <strong>100% Privat:</strong> Semua data tersimpan di browser Anda. 
-                <span className="text-green-700"> Tidak ada pengiriman data ke server, tidak ada pengumpulan data anonim, tidak ada tracking.</span> Data Anda sepenuhnya aman dan terjaga privasinya.
+              <p className="font-semibold text-gray-800 mt-3 flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>100% Privat:</strong> Semua data tersimpan di browser Anda. 
+                  <span className="text-green-700"> Tidak ada pengiriman data ke server, tidak ada pengumpulan data anonim, tidak ada tracking.</span> Data Anda sepenuhnya aman dan terjaga privasinya.
+                </span>
               </p>
             </div>
           </div>
