@@ -69,6 +69,7 @@ export const STORAGE_KEYS = {
   ACTIVE_BREAK_TIMER: 'active-break-timer',
   DEEPWORK_SESSIONS: 'deepwork-sessions',
   POMODORO_DATA: 'pomodoro-data',
+  START_BREAK_TIMER: 'start-break-timer',
   EXPENSES: 'expenses',
   TODOS: 'todos',
 } as const;

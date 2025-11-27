@@ -210,6 +210,23 @@ export default function FloatingTimer() {
     setShowCompletionNotice(false);
     hasCompletedRef.current = false;
     hasBreakCompletedRef.current = false;
+    
+    // If pomodoro completed, set flag to start break timer
+    if (completionType === 'pomodoro') {
+      const breakState = getLocalStorage<any>(STORAGE_KEYS.POMODORO_DATA, null);
+      const cycleCount = breakState?.cycleCount || 0;
+      const isLongBreak = cycleCount === 0 && (breakState?.dailyCount || 0) > 0;
+      
+      // Set flag for DeepWork page to show break timer
+      const breakDuration = isLongBreak ? 15 : 5;
+      const startBreakFlag = {
+        shouldStartBreak: true,
+        isLongBreak: isLongBreak,
+        duration: breakDuration,
+      };
+      localStorage.setItem(STORAGE_KEYS.START_BREAK_TIMER, JSON.stringify(startBreakFlag));
+    }
+    
     router.push('/deep-work');
   };
 

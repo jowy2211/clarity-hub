@@ -142,29 +142,44 @@ function DeepWorkContent() {
         }
     }
 
-    // Load break timer state
-    const breakState = safeGetLocalStorage<any>('active-break-timer', null);
-    if (breakState) {
-      if (breakState.isRunning && breakState.endTime) {
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((breakState.endTime - now) / 1000));
-        
-        if (remaining > 0) {
-          // Break timer still running
-          setBreakDuration(breakState.duration);
-          setBreakTimeLeft(remaining);
-          setIsLongBreak(breakState.isLongBreak);
-          setShowBreakTimer(true);
-          setIsBreakRunning(true);
-        } else {
-          // Break timer finished while user was away
-          safeRemoveLocalStorage('active-break-timer');
-          // Show setup for next pomodoro
-          setShowSetup(true);
-          safePlayAlarm();
-          safeShowNotification('Break Selesai! ⏰', {
-            body: 'Waktunya lanjut fokus lagi!',
-          });
+    // Check if should start break timer (from FloatingTimer completion)
+    const startBreakFlag = safeGetLocalStorage<any>('start-break-timer', null);
+    if (startBreakFlag && startBreakFlag.shouldStartBreak) {
+      // User clicked "Continue" after pomodoro completion
+      setShowBreakTimer(true);
+      setIsLongBreak(startBreakFlag.isLongBreak);
+      setBreakDuration(startBreakFlag.duration);
+      setBreakTimeLeft(startBreakFlag.duration * 60);
+      setShowSetup(false); // Hide pomodoro setup
+      
+      // Clear the flag
+      safeRemoveLocalStorage('start-break-timer');
+    } else {
+      // Load break timer state (existing break timer)
+      const breakState = safeGetLocalStorage<any>('active-break-timer', null);
+      if (breakState) {
+        if (breakState.isRunning && breakState.endTime) {
+          const now = Date.now();
+          const remaining = Math.max(0, Math.floor((breakState.endTime - now) / 1000));
+          
+          if (remaining > 0) {
+            // Break timer still running
+            setBreakDuration(breakState.duration);
+            setBreakTimeLeft(remaining);
+            setIsLongBreak(breakState.isLongBreak);
+            setShowBreakTimer(true);
+            setIsBreakRunning(true);
+            setShowSetup(false); // Hide pomodoro setup when break timer is running
+          } else {
+            // Break timer finished while user was away
+            safeRemoveLocalStorage('active-break-timer');
+            // Show setup for next pomodoro
+            setShowSetup(true);
+            safePlayAlarm();
+            safeShowNotification('Break Selesai! ⏰', {
+              body: 'Waktunya lanjut fokus lagi!',
+            });
+          }
         }
       }
     }
