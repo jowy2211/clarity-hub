@@ -78,7 +78,7 @@ export default function Home() {
                 <div className="p-3 lg:p-4 bg-violet-600 rounded-xl border border-violet-700">
                   <Brain className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 text-white" />
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-800">DeepWork</h2>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-800">Deep Work</h2>
               </div>
               <p className="text-base sm:text-lg lg:text-xl text-stone-700 mb-5 sm:mb-6 lg:mb-8 leading-relaxed">
                 Pomodoro timer dengan tracking otomatis untuk membantu fokus dalam bekerja
@@ -176,7 +176,7 @@ export default function Home() {
                 <div className="p-3 lg:p-4 bg-amber-600 rounded-xl border border-amber-700">
                   <Wallet className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 text-white" />
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-800">SpendSmart</h2>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-800">Spend Smart</h2>
               </div>
               <p className="text-base sm:text-lg lg:text-xl text-stone-700 mb-5 sm:mb-6 lg:mb-8 leading-relaxed">
                 Tracking pengeluaran harian dengan analytics dan insights untuk budget

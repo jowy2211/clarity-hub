@@ -186,7 +186,7 @@ export default function Statistics() {
           <div className="flex flex-col gap-3 mb-6 sm:mb-8">
             <div className="flex items-center gap-3">
               <BarChart3 className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-600" />
-              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">DeepWork Statistics</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">Deep Work Statistics</h1>
             </div>
             <motion.a
               whileTap={{ scale: 0.95 }}
@@ -194,7 +194,7 @@ export default function Statistics() {
               className="rounded-xl bg-violet-50 px-5 py-3 text-sm font-bold text-violet-700 active:bg-violet-200 lg:hover:bg-violet-200 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-2 justify-center w-full sm:w-auto touch-manipulation"
             >
               <Brain className="w-4 h-4" />
-              DeepWork
+              Kembali ke Deep Work
             </motion.a>
           </div>
 
@@ -213,7 +213,7 @@ export default function Statistics() {
                 className="inline-flex items-center gap-3 rounded-xl bg-violet-600 px-8 py-4 text-lg text-white font-bold active:bg-violet-700 lg:hover:bg-violet-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation"
               >
                 <Brain className="w-6 h-6" />
-                Mulai DeepWork
+                Mulai Deep Work
               </motion.a>
             </div>
           ) : (

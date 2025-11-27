@@ -74,7 +74,7 @@ export default function FloatingQuickNav() {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => { router.push('/'); setOpen(false); }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-stone-100 border border-stone-300 text-stone-700"
+              className="flex items-center gap-2 px-3 py-5 rounded-lg bg-stone-100 border border-stone-300 text-stone-700"
             >
               <Home className="w-4 h-4" />
               <span className="text-sm font-bold">Home</span>
@@ -82,7 +82,7 @@ export default function FloatingQuickNav() {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => { router.push('/deep-work'); setOpen(false); }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800"
+              className="flex items-center gap-2 px-3 py-5 rounded-lg bg-violet-50 border border-violet-300 text-violet-800"
             >
               <Brain className="w-4 h-4" />
               <span className="text-sm font-bold">Deep Work</span>
@@ -90,7 +90,7 @@ export default function FloatingQuickNav() {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => { router.push('/to-do-list'); setOpen(false); }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sky-50 border border-sky-300 text-sky-800"
+              className="flex items-center gap-2 px-3 py-5 rounded-lg bg-sky-50 border border-sky-300 text-sky-800"
             >
               <CheckSquare className="w-4 h-4" />
               <span className="text-sm font-bold">Todo List</span>
@@ -98,7 +98,7 @@ export default function FloatingQuickNav() {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => { router.push('/spend-smart'); setOpen(false); }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-800"
+              className="flex items-center gap-2 px-3 py-5 rounded-lg bg-amber-50 border border-amber-300 text-amber-800"
             >
               <Wallet className="w-4 h-4" />
               <span className="text-sm font-bold">SpendSmart</span>

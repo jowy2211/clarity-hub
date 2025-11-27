@@ -235,7 +235,7 @@ export default function SpendSmartStatistics() {
           <div className="flex flex-col gap-3 mb-6 sm:mb-8">
             <div className="flex items-center gap-3">
               <BarChart3 className="w-9 h-9 sm:w-10 sm:h-10 text-green-500" />
-              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">SpendSmart Statistics</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">Spend Smart Statistics</h1>
             </div>
             <motion.a
               whileTap={{ scale: 0.95 }}
@@ -243,7 +243,7 @@ export default function SpendSmartStatistics() {
               className="w-full sm:w-auto rounded-xl bg-orange-100 px-5 py-3 text-sm text-orange-700 active:bg-orange-200 lg:hover:bg-orange-200 font-bold transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-2 justify-center touch-manipulation"
             >
               <Wallet className="w-4 h-4" />
-              Kembali ke SpendSmart
+              Kembali ke Spend Smart
             </motion.a>
           </div>
 
