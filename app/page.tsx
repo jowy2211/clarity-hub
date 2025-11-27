@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import GitHubBadge from '@/components/layout/GitHubBadge';
 import PageTransition from '@/components/layout/PageTransition';
 import { HomePageSkeleton } from '@/components/ui/SkeletonLoader';
 
@@ -42,6 +43,7 @@ export default function Home() {
 
   return (
     <PageTransition>
+      <GitHubBadge />
       <div className="min-h-screen bg-white font-sans p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto py-6 sm:py-10 lg:py-16">
           {/* Header - Mobile First */}
