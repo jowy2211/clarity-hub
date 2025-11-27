@@ -1,29 +1,29 @@
 "use client";
 import {
-    Suspense,
-    useEffect,
-    useRef,
-    useState,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 
 import {
-    AnimatePresence,
-    motion,
+  AnimatePresence,
+  motion,
 } from 'framer-motion';
 import {
-    BarChart3,
-    Brain,
-    Clock,
-    Home,
-    Inbox,
-    MousePointerClick,
-    Pause,
-    Play,
-    RotateCcw,
+  BarChart3,
+  Brain,
+  Clock,
+  Home,
+  Inbox,
+  MousePointerClick,
+  Pause,
+  Play,
+  RotateCcw,
 } from 'lucide-react';
 import {
-    useRouter,
-    useSearchParams,
+  useRouter,
+  useSearchParams,
 } from 'next/navigation';
 
 import PageTransition from '@/components/layout/PageTransition';
@@ -66,6 +66,7 @@ function DeepWorkContent() {
   const [pomodoroCount, setPomodoroCount] = useState(0); // Current cycle position (0-3)
   const [dailyPomodoroCount, setDailyPomodoroCount] = useState(0); // Total today
   const [isLongBreak, setIsLongBreak] = useState(false);
+  const [shouldTriggerCompletion, setShouldTriggerCompletion] = useState(false);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const breakIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -113,8 +114,11 @@ function DeepWorkContent() {
             setIsPaused(false);
             setShowSetup(false);
           } else {
-            // Timer already finished while away
-            localStorage.removeItem('active-timer');
+            // Timer finished while user was away - set flag to trigger completion
+            setMeaning(state.meaning);
+            setDuration(state.duration);
+            setTimeLeft(0);
+            setShouldTriggerCompletion(true);
           }
         } else if (state.isPaused) {
           // Load paused state
@@ -127,6 +131,41 @@ function DeepWorkContent() {
         }
       } catch (error) {
         console.error('Failed to load timer state:', error);
+      }
+    }
+
+    // Load break timer state
+    const savedBreakTimer = localStorage.getItem('active-break-timer');
+    if (savedBreakTimer) {
+      try {
+        const state = JSON.parse(savedBreakTimer);
+        if (state.isRunning && state.endTime) {
+          const now = Date.now();
+          const remaining = Math.max(0, Math.floor((state.endTime - now) / 1000));
+          
+          if (remaining > 0) {
+            // Break timer still running
+            setBreakDuration(state.duration);
+            setBreakTimeLeft(remaining);
+            setIsLongBreak(state.isLongBreak);
+            setShowBreakTimer(true);
+            setIsBreakRunning(true);
+          } else {
+            // Break timer finished while user was away
+            localStorage.removeItem('active-break-timer');
+            // Show setup for next pomodoro
+            setShowSetup(true);
+            playAlarm();
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('Break Selesai! ⏰', {
+                body: 'Waktunya lanjut fokus lagi!',
+                icon: '/favicon.ico',
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load break timer state:', error);
       }
     }
   }, []);
@@ -225,6 +264,14 @@ function DeepWorkContent() {
       }
     };
   }, [isRunning, isPaused, timeLeft, meaning, duration]);
+
+  // Handle delayed timer completion (when timer finished while user was away)
+  useEffect(() => {
+    if (shouldTriggerCompletion && !isLoading && sessions) {
+      setShouldTriggerCompletion(false);
+      handleTimerComplete();
+    }
+  }, [shouldTriggerCompletion, isLoading, sessions]);
 
   const handleTimerComplete = () => {
     setIsRunning(false);
@@ -334,20 +381,41 @@ function DeepWorkContent() {
 
   // Break timer functions
   const startBreak = () => {
-    setBreakTimeLeft(breakDuration * 60);
+    const timeInSeconds = breakDuration * 60;
+    setBreakTimeLeft(timeInSeconds);
     setIsBreakRunning(true);
+    
+    // Save break timer to localStorage with endTime
+    const endTime = Date.now() + (timeInSeconds * 1000);
+    const breakTimerState = {
+      duration: breakDuration,
+      timeLeft: timeInSeconds,
+      isRunning: true,
+      isLongBreak: isLongBreak,
+      endTime: endTime,
+    };
+    localStorage.setItem('active-break-timer', JSON.stringify(breakTimerState));
   };
 
   const skipBreak = () => {
     setShowBreakTimer(false);
     setShowSetup(true);
+    // Reset form untuk pomodoro berikutnya, tapi jangan reset counter
     setMeaning("");
     setDuration(25);
     setTimeLeft(25 * 60);
+    setIsBreakRunning(false);
+    
+    // Remove break timer from localStorage
+    localStorage.removeItem('active-break-timer');
   };
 
   const handleBreakComplete = () => {
     setIsBreakRunning(false);
+    
+    // Remove break timer from localStorage
+    localStorage.removeItem('active-break-timer');
+    
     playAlarm();
     
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -357,26 +425,49 @@ function DeepWorkContent() {
       });
     }
     
+    // Langsung ke setup pomodoro berikutnya tanpa reset counter
     setTimeout(() => {
       setShowBreakTimer(false);
       setShowSetup(true);
+      // Reset form untuk pomodoro berikutnya, tapi counter tetap
       setMeaning("");
       setDuration(25);
       setTimeLeft(25 * 60);
     }, 2000);
   };
 
-  // Break timer countdown
+  // Break timer countdown - timestamp-based
   useEffect(() => {
-    if (isBreakRunning && breakTimeLeft > 0) {
+    if (isBreakRunning) {
+      const savedBreakTimer = localStorage.getItem('active-break-timer');
+      let endTime: number;
+      
+      if (savedBreakTimer) {
+        const state = JSON.parse(savedBreakTimer);
+        endTime = state.endTime;
+      } else {
+        // First time starting - calculate end time
+        endTime = Date.now() + (breakTimeLeft * 1000);
+        const breakTimerState = {
+          duration: breakDuration,
+          timeLeft: breakTimeLeft,
+          isRunning: true,
+          isLongBreak: isLongBreak,
+          endTime: endTime,
+        };
+        localStorage.setItem('active-break-timer', JSON.stringify(breakTimerState));
+      }
+
+      // Update every second based on endTime
       breakIntervalRef.current = setInterval(() => {
-        setBreakTimeLeft((prev) => {
-          if (prev <= 1) {
-            handleBreakComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+        
+        setBreakTimeLeft(remaining);
+        
+        if (remaining <= 0) {
+          handleBreakComplete();
+        }
       }, 1000);
     } else {
       if (breakIntervalRef.current) {
@@ -389,7 +480,7 @@ function DeepWorkContent() {
         clearInterval(breakIntervalRef.current);
       }
     };
-  }, [isBreakRunning, breakTimeLeft]);
+  }, [isBreakRunning]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -397,7 +488,7 @@ function DeepWorkContent() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const presetDurations = [15, 25, 30, 45, 50, 60];
+  const presetDurations = [1, 15, 25, 30, 45, 50, 60];
 
   const progress = ((duration * 60 - timeLeft) / (duration * 60)) * 100;
 
@@ -447,8 +538,8 @@ function DeepWorkContent() {
             {/* Header - Mobile First */}
             <div className="flex flex-col gap-3 mb-5 sm:mb-6 shrink-0">
               <div className="flex items-center gap-3">
-                <Brain className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-600" />
-                <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">DeepWork</h1>
+                <Brain className="w-9 h-9 sm:w-10 sm:h-10 text-violet-600" />
+                <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">Deep Work</h1>
               </div>
               <div className="flex gap-2.5">
                 <motion.a
@@ -489,9 +580,9 @@ function DeepWorkContent() {
                         ? 'Mantap! Waktunya long break (15-30 menit)' 
                         : 'Waktunya short break (5 menit)'}
                     </p>
-                    <div className="mt-4 inline-flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-full border-2 border-stone-300">
-                      <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
-                      <p className="text-sm font-bold text-emerald-700">
+                    <div className="mt-4 inline-flex items-center gap-2 bg-violet-50 px-4 py-2 rounded-full border-2 border-stone-300">
+                      <div className="w-2 h-2 bg-violet-600 rounded-full"></div>
+                      <p className="text-sm font-bold text-violet-700">
                         Total hari ini: {dailyPomodoroCount} pomodoro
                       </p>
                     </div>
@@ -527,7 +618,7 @@ function DeepWorkContent() {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={startBreak}
-                          className="flex-1 rounded-xl bg-blue-500 px-6 py-5 text-lg font-bold text-white active:bg-blue-600 lg:hover:bg-blue-600 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-3 justify-center touch-manipulation"
+                          className="flex-1 rounded-xl bg-violet-500 px-6 py-5 text-lg font-bold text-white active:bg-violet-600 lg:hover:bg-violet-600 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-3 justify-center touch-manipulation"
                         >
                           <Play className="w-6 h-6" fill="white" />
                           Mulai Break
@@ -546,7 +637,7 @@ function DeepWorkContent() {
                       {/* Break Timer Display - Mobile First */}
                       <div className="text-center px-4">
                         <p className="text-base text-stone-500 mb-5">Istirahat dulu...</p>
-                        <div className="text-7xl sm:text-8xl font-bold text-blue-500 mb-8">
+                        <div className="text-7xl sm:text-8xl font-bold text-violet-500 mb-8">
                           {formatTime(breakTimeLeft)}
                         </div>
                       </div>
@@ -570,18 +661,18 @@ function DeepWorkContent() {
                 >
                   {/* Pomodoro Counter Display - Mobile First */}
                   {dailyPomodoroCount > 0 && (
-                    <div className="bg-emerald-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-emerald-300 p-5 text-center">
+                    <div className="bg-violet-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-violet-300 p-5 text-center">
                       <div className="flex flex-col gap-4">
                         <div>
-                          <div className="text-4xl font-black text-emerald-900">{dailyPomodoroCount}</div>
-                          <div className="text-sm font-bold text-emerald-700 uppercase mt-1">Pomodoro Hari Ini</div>
+                          <div className="text-4xl font-black text-violet-900">{dailyPomodoroCount}</div>
+                          <div className="text-sm font-bold text-violet-700 uppercase mt-1">Pomodoro Hari Ini</div>
                         </div>
-                        <div className="h-px bg-emerald-200"></div>
+                        <div className="h-px bg-violet-200"></div>
                         <div>
-                          <div className="text-lg font-bold text-emerald-900">
+                          <div className="text-lg font-bold text-violet-900">
                             Cycle: {pomodoroCount + 1}/4
                           </div>
-                          <div className="text-sm text-emerald-700 mt-1">
+                          <div className="text-sm text-violet-700 mt-1">
                             {pomodoroCount === 3 ? 'Long break setelah ini!' : 'Short break next'}
                           </div>
                         </div>
@@ -600,7 +691,7 @@ function DeepWorkContent() {
                       onChange={(e) => setMeaning(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && startTimer()}
                       placeholder="Contoh: Menulis artikel, Coding fitur baru..."
-                      className="w-full rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 px-5 py-4 text-base text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                      className="w-full rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 px-5 py-4 text-base text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white"
                       autoFocus
                     />
                   </div>
@@ -618,7 +709,7 @@ function DeepWorkContent() {
                           onClick={() => setDuration(mins)}
                           className={`rounded-xl px-5 py-4 text-base font-bold border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 transition touch-manipulation ${
                             duration === mins
-                              ? 'bg-emerald-600 text-white border-emerald-700'
+                              ? 'bg-violet-600 text-white border-violet-700'
                               : 'bg-white text-stone-700 active:bg-stone-100'
                           }`}
                         >
@@ -632,7 +723,7 @@ function DeepWorkContent() {
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={startTimer}
-                    className="mx-4 rounded-xl bg-emerald-600 px-6 py-5 text-xl font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t border-l border-r-[6px] border-b-[6px] border-emerald-700 flex items-center justify-center gap-3 touch-manipulation"
+                    className="mx-4 rounded-xl bg-violet-600 px-6 py-5 text-xl font-bold text-white active:bg-violet-700 lg:hover:bg-violet-700 transition border-t border-l border-r-[6px] border-b-[6px] border-violet-700 flex items-center justify-center gap-3 touch-manipulation"
                   >
                     <Play className="w-7 h-7" fill="white" />
                     Mulai Pomodoro #{dailyPomodoroCount + 1}
@@ -647,11 +738,11 @@ function DeepWorkContent() {
                   className="flex-1 flex flex-col justify-center items-center gap-6 sm:gap-8 py-4"
                 >
                   {/* Pomodoro Cycle Indicator - Mobile First */}
-                  <div className="w-full max-w-md bg-emerald-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-emerald-300 p-4">
+                  <div className="w-full max-w-md bg-violet-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-violet-300 p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="text-base font-bold text-emerald-900">Pomodoro {pomodoroCount + 1}/4</span>
-                        <span className="text-sm text-emerald-700">Hari ini: {dailyPomodoroCount + 1}</span>
+                        <span className="text-base font-bold text-violet-900">Pomodoro {pomodoroCount + 1}/4</span>
+                        <span className="text-sm text-violet-700">Hari ini: {dailyPomodoroCount + 1}</span>
                       </div>
                       <div className="flex gap-2">
                         {[0, 1, 2, 3].map((i) => (
@@ -659,9 +750,9 @@ function DeepWorkContent() {
                             key={i}
                             className={`w-4 h-4 rounded-full ${
                               i === pomodoroCount 
-                                ? 'bg-emerald-600 animate-pulse' 
+                                ? 'bg-violet-600 animate-pulse' 
                                 : i < pomodoroCount 
-                                ? 'bg-emerald-300' 
+                                ? 'bg-violet-300' 
                                 : 'bg-stone-300'
                             }`}
                           />
@@ -687,8 +778,8 @@ function DeepWorkContent() {
                           {formatTime(timeLeft)}
                         </div>
                         <div className="flex items-center justify-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-500'} animate-pulse`}></div>
-                          <span className={`text-base sm:text-lg font-bold uppercase tracking-wider ${isPaused ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          <div className={`w-3 h-3 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-violet-500'} animate-pulse`}></div>
+                          <span className={`text-base sm:text-lg font-bold uppercase tracking-wider ${isPaused ? 'text-amber-600' : 'text-violet-600'}`}>
                             {isPaused ? 'DIJEDA' : 'FOKUS'}
                           </span>
                         </div>
@@ -699,7 +790,7 @@ function DeepWorkContent() {
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${progress}%` }}
-                          className="h-full bg-linear-to-r from-emerald-500 to-emerald-600"
+                          className="h-full bg-linear-to-r from-violet-500 to-violet-600"
                           transition={{ duration: 0.5 }}
                         />
                       </div>
@@ -719,7 +810,7 @@ function DeepWorkContent() {
                       onClick={pauseTimer}
                       className={`flex-1 rounded-xl px-6 py-5 font-black text-lg transition border-t border-l border-r-2 border-b-2 flex items-center gap-3 justify-center touch-manipulation ${
                         isPaused 
-                          ? 'bg-emerald-500 text-white active:bg-emerald-600 lg:hover:bg-emerald-600 border-emerald-600' 
+                          ? 'bg-violet-500 text-white active:bg-violet-600 lg:hover:bg-violet-600 border-violet-600' 
                           : 'bg-amber-400 text-amber-900 active:bg-amber-500 lg:hover:bg-amber-500 border-amber-500'
                       }`}
                     >
@@ -768,14 +859,14 @@ function DeepWorkContent() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     onClick={() => reuseSession(group.meaning, group.duration)}
-                    className="bg-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-4 cursor-pointer active:bg-emerald-50 lg:hover:bg-emerald-50 transition touch-manipulation"
+                    className="bg-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-4 cursor-pointer active:bg-violet-50 lg:hover:bg-violet-50 transition touch-manipulation"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <p className="font-bold text-stone-800 text-base flex-1 pr-2">
                         {group.meaning}
                       </p>
                       {group.count > 1 && (
-                        <span className="bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full shrink-0">
+                        <span className="bg-violet-600 text-white text-sm font-bold px-3 py-1 rounded-full shrink-0">
                           {group.count}x
                         </span>
                       )}
@@ -793,7 +884,7 @@ function DeepWorkContent() {
                       </span>
                     </div>
                     <div className="pt-3 border-t border-stone-200">
-                      <p className="text-sm text-emerald-700 font-bold flex items-center gap-2">
+                      <p className="text-sm text-violet-700 font-bold flex items-center gap-2">
                         <MousePointerClick className="w-4 h-4" />
                         Klik untuk mulai
                       </p>

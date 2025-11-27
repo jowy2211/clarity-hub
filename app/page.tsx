@@ -1,22 +1,22 @@
 "use client";
 import {
-    useEffect,
-    useState,
+  useEffect,
+  useState,
 } from 'react';
 
 import { motion } from 'framer-motion';
 import {
-    BarChart3,
-    Bell,
-    Brain,
-    CheckSquare,
-    Filter,
-    ListTodo,
-    Save,
-    Target,
-    Timer,
-    TrendingUp,
-    Wallet,
+  BarChart3,
+  Bell,
+  Brain,
+  CheckSquare,
+  Filter,
+  ListTodo,
+  Save,
+  Target,
+  Timer,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -28,7 +28,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(false);
+    // Set minimal delay untuk skeleton loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 20); // Delay minimal 20ms
+    
+    return () => clearTimeout(timer);
   }, []);
 
   if (isLoading) {
@@ -65,12 +70,12 @@ export default function Home() {
               whileHover={{ rotateX: 1.5, rotateY: -1.5, scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 320, damping: 30 }}
               onClick={() => router.push('/deep-work')}
-              className="group cursor-pointer bg-linear-to-br from-emerald-50/80 via-emerald-50/40 to-white/40 backdrop-blur-sm rounded-2xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-7 sm:p-8 lg:p-10 active:scale-[0.98] lg:hover:shadow-xl lg:hover:-translate-y-1 transition-all duration-200 relative overflow-hidden will-change-transform"
+              className="group cursor-pointer bg-linear-to-br from-violet-50/80 via-violet-50/40 to-white/40 backdrop-blur-sm rounded-2xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-7 sm:p-8 lg:p-10 active:scale-[0.98] lg:hover:shadow-xl lg:hover:-translate-y-1 transition-all duration-200 relative overflow-hidden will-change-transform"
             >
-              <div className="absolute inset-0 bg-linear-to-br from-emerald-100/20 to-transparent opacity-50"></div>
+              <div className="absolute inset-0 bg-linear-to-br from-violet-100/20 to-transparent opacity-50"></div>
               <div className="relative z-10">
               <div className="flex items-center gap-4 mb-5 sm:mb-6 lg:mb-7">
-                <div className="p-3 lg:p-4 bg-emerald-600 rounded-xl border border-emerald-700">
+                <div className="p-3 lg:p-4 bg-violet-600 rounded-xl border border-violet-700">
                   <Brain className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 text-white" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-stone-800">DeepWork</h2>
@@ -81,26 +86,26 @@ export default function Home() {
               <div className="space-y-3 lg:space-y-4">
                 <div className="flex items-center gap-3 text-base lg:text-lg text-stone-700">
                   <div className="p-2 lg:p-2.5 bg-white rounded-lg border border-stone-300">
-                    <Timer className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-700" />
+                    <Timer className="w-5 h-5 lg:w-6 lg:h-6 text-violet-700" />
                   </div>
                   <span>Pomodoro 25 menit</span>
                 </div>
                 <div className="flex items-center gap-3 text-base lg:text-lg text-stone-700">
                   <div className="p-2 lg:p-2.5 bg-white rounded-lg border border-stone-300">
-                    <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-700" />
+                    <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6 text-violet-700" />
                   </div>
                   <span>Statistik & analytics</span>
                 </div>
                 <div className="flex items-center gap-3 text-base lg:text-lg text-stone-700">
                   <div className="p-2 lg:p-2.5 bg-white rounded-lg border border-stone-300">
-                    <Bell className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-700" />
+                    <Bell className="w-5 h-5 lg:w-6 lg:h-6 text-violet-700" />
                   </div>
                   <span>Notifikasi & alarm</span>
                 </div>
               </div>
               <motion.div
                 whileTap={{ scale: 0.95 }}
-                className="mt-6 lg:mt-8 w-full rounded-xl bg-emerald-600 px-6 py-4 lg:py-5 text-center text-base lg:text-lg font-bold text-white border-t border-l border-r-[6px] border-b-[6px] border-emerald-700 group-hover:bg-emerald-700 transition touch-manipulation"
+                className="mt-6 lg:mt-8 w-full rounded-xl bg-violet-600 px-6 py-4 lg:py-5 text-center text-base lg:text-lg font-bold text-white border-t border-l border-r-[6px] border-b-[6px] border-violet-700 group-hover:bg-violet-700 transition touch-manipulation"
               >
                 Mulai Fokus →
               </motion.div>

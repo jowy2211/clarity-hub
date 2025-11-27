@@ -25,6 +25,17 @@ export interface TimerState {
 }
 
 /**
+ * Break Timer State
+ */
+export interface BreakTimerState {
+  duration: number;
+  timeLeft: number;
+  isRunning: boolean;
+  isLongBreak: boolean;
+  endTime?: number;
+}
+
+/**
  * Pomodoro Data
  */
 export interface PomodoroData {

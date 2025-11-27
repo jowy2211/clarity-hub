@@ -191,7 +191,7 @@ export default function Statistics() {
             <motion.a
               whileTap={{ scale: 0.95 }}
               href="/deep-work"
-              className="rounded-xl bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 active:bg-purple-200 lg:hover:bg-purple-200 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-2 justify-center w-full sm:w-auto touch-manipulation"
+              className="rounded-xl bg-violet-50 px-5 py-3 text-sm font-bold text-violet-700 active:bg-violet-200 lg:hover:bg-violet-200 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-2 justify-center w-full sm:w-auto touch-manipulation"
             >
               <Brain className="w-4 h-4" />
               DeepWork
@@ -200,7 +200,7 @@ export default function Statistics() {
 
           {sessions.length === 0 ? (
             <div className="text-center py-16 sm:py-20 px-4">
-              <BarChart3 className="w-24 h-24 text-green-300 mx-auto mb-5" />
+              <BarChart3 className="w-24 h-24 text-emerald-300 mx-auto mb-5" />
               <h2 className="text-3xl font-bold text-stone-800 mb-3">
                 Belum ada data
               </h2>
@@ -210,7 +210,7 @@ export default function Statistics() {
               <motion.a
                 whileTap={{ scale: 0.95 }}
                 href="/deep-work"
-                className="inline-flex items-center gap-3 rounded-xl bg-emerald-600 px-8 py-4 text-lg text-white font-bold active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation"
+                className="inline-flex items-center gap-3 rounded-xl bg-violet-600 px-8 py-4 text-lg text-white font-bold active:bg-violet-700 lg:hover:bg-violet-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation"
               >
                 <Brain className="w-6 h-6" />
                 Mulai DeepWork
@@ -225,7 +225,7 @@ export default function Statistics() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-linear-to-br from-green-500 to-green-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-5 sm:p-6"
+                  className="bg-linear-to-br from-emerald-500 to-emerald-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-5 sm:p-6"
                 >
                   <Brain className="w-8 h-8 mb-3 opacity-80" />
                   <div className="text-4xl font-bold mb-2">{totalPomodoros}</div>
@@ -315,7 +315,7 @@ export default function Statistics() {
                             initial={{ height: 0 }}
                             animate={{ height: `${(day.sessions / maxSessions) * 100}%` }}
                             transition={prefersReducedMotion ? { duration: 0.12 } : { delay: 0.4 + index * 0.08, type: 'spring', stiffness: 260, damping: 26 }}
-                            className="w-full bg-linear-to-t from-green-500 to-green-400 rounded-t-lg border-t-2 border-l-2 border-r-4 border-stone-300 relative group cursor-pointer touch-manipulation"
+                            className="w-full bg-linear-to-t from-emerald-500 to-emerald-400 rounded-t-lg border-t-2 border-l-2 border-r-4 border-stone-300 relative group cursor-pointer touch-manipulation"
                             style={{ minHeight: day.sessions > 0 ? '24px' : '0px' }}
                           >
                             {day.sessions > 0 && (
@@ -369,7 +369,7 @@ export default function Statistics() {
                             <span className="font-bold text-base text-stone-800 flex-1 truncate pr-3">
                               {item.meaning}
                             </span>
-                            <span className="bg-green-500 text-white text-sm font-bold px-3 py-1.5 rounded-full shrink-0">
+                            <span className="bg-emerald-500 text-white text-sm font-bold px-3 py-1.5 rounded-full shrink-0">
                               {item.count}x
                             </span>
                           </div>

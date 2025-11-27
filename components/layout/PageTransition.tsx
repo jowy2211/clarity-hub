@@ -21,7 +21,7 @@ export default function PageTransition({ children }: PageTransitionProps) {
   };
 
   const fadeOnly = {
-    duration: 0.12,
+    duration: 0.1,
     ease: [0.25, 0.1, 0.25, 1] as const,
   };
 

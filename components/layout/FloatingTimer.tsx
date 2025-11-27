@@ -20,7 +20,10 @@ import {
 } from 'next/navigation';
 
 import { STORAGE_KEYS } from '@/lib/constants';
-import { TimerState } from '@/lib/types';
+import {
+  BreakTimerState,
+  TimerState,
+} from '@/lib/types';
 import { formatTime } from '@/lib/utils/formatters';
 import {
   getLocalStorage,
@@ -31,11 +34,79 @@ export default function FloatingTimer() {
   const router = useRouter();
   const pathname = usePathname();
   const [timerState, setTimerState] = useState<TimerState | null>(null);
+  const [breakTimerState, setBreakTimerState] = useState<BreakTimerState | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [breakTimeLeft, setBreakTimeLeft] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const breakIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasCompletedRef = useRef(false);
+  const hasBreakCompletedRef = useRef(false);
 
   // Check if we're on DeepWork page
   const isOnDeepWorkPage = pathname === '/deep-work';
+
+  // Play alarm sound
+  const playAlarm = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 1);
+    } catch (error) {
+      console.error('Failed to play alarm:', error);
+    }
+  };
+
+  // Handle timer completion
+  const handleTimerComplete = () => {
+    if (hasCompletedRef.current) return; // Prevent double execution
+    hasCompletedRef.current = true;
+
+    // Play alarm
+    playAlarm();
+
+    // Show notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Pomodoro Selesai! ⏰', {
+        body: `Timer selesai! Kembali ke DeepWork untuk melanjutkan.`,
+        icon: '/favicon.ico',
+      });
+    }
+
+    // Redirect to deep-work page
+    router.push('/deep-work');
+  };
+
+  // Handle break timer completion
+  const handleBreakComplete = () => {
+    if (hasBreakCompletedRef.current) return; // Prevent double execution
+    hasBreakCompletedRef.current = true;
+
+    // Play alarm
+    playAlarm();
+
+    // Show notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Break Selesai! ⏰', {
+        body: `Waktunya lanjut fokus lagi!`,
+        icon: '/favicon.ico',
+      });
+    }
+
+    // Redirect to deep-work page
+    router.push('/deep-work');
+  };
 
   // Load timer state from localStorage
   useEffect(() => {
@@ -46,6 +117,13 @@ export default function FloatingTimer() {
           // Calculate actual time left from endTime (single source of truth)
           const now = Date.now();
           const actualTimeLeft = Math.max(0, Math.floor((state.endTime - now) / 1000));
+          
+          // Check if timer completed
+          if (actualTimeLeft <= 0 && timeLeft > 0) {
+            handleTimerComplete();
+            return;
+          }
+          
           setTimeLeft(actualTimeLeft);
           setTimerState({ ...state, timeLeft: actualTimeLeft });
         } else {
@@ -55,6 +133,7 @@ export default function FloatingTimer() {
         }
       } else {
         setTimerState(null);
+        hasCompletedRef.current = false; // Reset flag when no timer
       }
     };
 
@@ -74,6 +153,50 @@ export default function FloatingTimer() {
       }
     };
   }, [timerState?.isRunning]);
+
+  // Load break timer state from localStorage
+  useEffect(() => {
+    const loadBreakTimerState = () => {
+      const state = getLocalStorage<BreakTimerState | null>(STORAGE_KEYS.ACTIVE_BREAK_TIMER, null);
+      if (state) {
+        if (state.isRunning && state.endTime) {
+          const now = Date.now();
+          const actualTimeLeft = Math.max(0, Math.floor((state.endTime - now) / 1000));
+          
+          // Check if break timer completed
+          if (actualTimeLeft <= 0 && breakTimeLeft > 0) {
+            handleBreakComplete();
+            return;
+          }
+          
+          setBreakTimeLeft(actualTimeLeft);
+          setBreakTimerState({ ...state, timeLeft: actualTimeLeft });
+        } else {
+          setBreakTimeLeft(state.timeLeft);
+          setBreakTimerState(state);
+        }
+      } else {
+        setBreakTimerState(null);
+        hasBreakCompletedRef.current = false; // Reset flag when no break timer
+      }
+    };
+
+    // Load initial state
+    loadBreakTimerState();
+
+    // Only poll if there's an active break timer
+    let checkInterval: NodeJS.Timeout | null = null;
+    const saved = getLocalStorage<BreakTimerState | null>(STORAGE_KEYS.ACTIVE_BREAK_TIMER, null);
+    if (saved) {
+      checkInterval = setInterval(loadBreakTimerState, 100);
+    }
+
+    return () => {
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+    };
+  }, [breakTimerState?.isRunning]);
 
   // No local countdown - just rely on polling localStorage
   useEffect(() => {
@@ -95,8 +218,46 @@ export default function FloatingTimer() {
     router.push('/deep-work');
   };
 
-  // Don't show if on DeepWork page or no active timer
-  if (isOnDeepWorkPage || !timerState || !timerState.isRunning) return null;
+  // Don't show if on DeepWork page
+  if (isOnDeepWorkPage) return null;
+  
+  // Show break timer if active
+  if (breakTimerState && breakTimerState.isRunning) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 100 }}
+          className="fixed top-6 right-5 z-40"
+        >
+          <div className="bg-blue-500 text-white rounded-lg border-t border-l border-r-[6px] border-b-[6px] border-blue-600 shadow-lg overflow-hidden">
+            <div className="px-4 py-3 flex items-center gap-3">
+              <Brain className="w-6 h-6 shrink-0" />
+              <div className="flex-1">
+                <div className="text-xs opacity-80">{breakTimerState.isLongBreak ? 'Long Break' : 'Short Break'}</div>
+                <div className="font-bold text-lg">{formatTime(breakTimeLeft)}</div>
+                <div className="text-xs opacity-90">
+                  Istirahat dulu...
+                </div>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleMaximize}
+                className="p-2 hover:bg-blue-600 rounded-md transition"
+                title="Buka DeepWork"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+  
+  // Show pomodoro timer if active
+  if (!timerState || !timerState.isRunning) return null;
 
   return (
     <AnimatePresence>
@@ -106,7 +267,7 @@ export default function FloatingTimer() {
         exit={{ opacity: 0, y: 100 }}
         className="fixed top-6 right-5 z-40"
       >
-        <div className="bg-emerald-600 text-white rounded-lg border-t border-l border-r-[6px] border-b-[6px] border-emerald-700 shadow-lg overflow-hidden">
+        <div className="bg-violet-600 text-white rounded-lg border-t border-l border-r-[6px] border-b-[6px] border-violet-700 shadow-lg overflow-hidden">
           <div className="px-4 py-3 flex items-center gap-3">
             <Brain className="w-6 h-6 shrink-0" />
             <div className="flex-1">
@@ -120,7 +281,7 @@ export default function FloatingTimer() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleMaximize}
-                className="p-2 hover:bg-emerald-700 rounded-md transition"
+                className="p-2 hover:bg-violet-700 rounded-md transition"
                 title="Buka DeepWork"
               >
                 <Maximize2 className="w-4 h-4" />
@@ -128,7 +289,7 @@ export default function FloatingTimer() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleClose}
-                className="p-2 hover:bg-emerald-700 rounded-md transition"
+                className="p-2 hover:bg-violet-700 rounded-md transition"
                 title="Stop Timer"
               >
                 <X className="w-4 h-4" />

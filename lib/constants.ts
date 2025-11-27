@@ -66,6 +66,7 @@ export const LONG_BREAK_DURATIONS = [15, 20, 30];
  */
 export const STORAGE_KEYS = {
   ACTIVE_TIMER: 'active-timer',
+  ACTIVE_BREAK_TIMER: 'active-break-timer',
   DEEPWORK_SESSIONS: 'deepwork-sessions',
   POMODORO_DATA: 'pomodoro-data',
   EXPENSES: 'expenses',

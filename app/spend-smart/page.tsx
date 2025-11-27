@@ -1,33 +1,33 @@
 "use client";
 import {
-    useEffect,
-    useState,
+  useEffect,
+  useState,
 } from 'react';
 
 import {
-    AnimatePresence,
-    motion,
+  AnimatePresence,
+  motion,
 } from 'framer-motion';
 import {
-    BarChart3,
-    Calendar,
-    Coffee,
-    CreditCard,
-    DollarSign,
-    Edit,
-    Home,
-    Package,
-    Plane,
-    Plus,
-    ShoppingBag,
-    Smartphone,
-    Sparkles,
-    Target,
-    Trash2,
-    TrendingUp,
-    Wallet,
-    X,
-    Zap,
+  BarChart3,
+  Calendar,
+  Coffee,
+  CreditCard,
+  DollarSign,
+  Edit,
+  Home,
+  Package,
+  Plane,
+  Plus,
+  ShoppingBag,
+  Smartphone,
+  Sparkles,
+  Target,
+  Trash2,
+  TrendingUp,
+  Wallet,
+  X,
+  Zap,
 } from 'lucide-react';
 
 import PageTransition from '@/components/layout/PageTransition';
@@ -378,7 +378,7 @@ export default function SpendSmart() {
           <div className="flex flex-col gap-3 mb-6 sm:mb-8">
             <div className="flex items-center gap-3">
               <Wallet className="w-9 h-9 sm:w-10 sm:h-10 text-amber-600" />
-              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">SpendSmart</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">Spend Smart</h1>
             </div>
             <div className="flex gap-2.5">
               <motion.a
