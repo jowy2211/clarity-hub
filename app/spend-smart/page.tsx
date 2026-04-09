@@ -1,13 +1,7 @@
-"use client";
-import {
-  useEffect,
-  useState,
-} from 'react';
+'use client';
+import { useEffect, useState } from 'react';
 
-import {
-  AnimatePresence,
-  motion,
-} from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
   Calendar,
@@ -55,6 +49,7 @@ interface SavingGoal {
   targetAmount: number;
   currentAmount: number;
   deadline: string;
+  monthlySavings?: number;
   icon: string;
   priority: 'high' | 'medium' | 'low';
   createdAt: string;
@@ -65,7 +60,12 @@ const CATEGORIES: Category[] = [
   { id: 'food', name: 'Makanan', icon: Coffee, color: 'bg-amber-600' },
   { id: 'transport', name: 'Transport', icon: Zap, color: 'bg-sky-600' },
   { id: 'shopping', name: 'Belanja', icon: ShoppingBag, color: 'bg-pink-500' },
-  { id: 'entertainment', name: 'Hiburan', icon: Sparkles, color: 'bg-purple-500' },
+  {
+    id: 'entertainment',
+    name: 'Hiburan',
+    icon: Sparkles,
+    color: 'bg-purple-500',
+  },
   { id: 'bills', name: 'Tagihan', icon: CreditCard, color: 'bg-red-500' },
   { id: 'health', name: 'Kesehatan', icon: Package, color: 'bg-emerald-600' },
   { id: 'other', name: 'Lainnya', icon: Wallet, color: 'bg-stone-500' },
@@ -89,22 +89,25 @@ export default function SpendSmart() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExpensesInitialized, setIsExpensesInitialized] = useState(false);
   const [isGoalsInitialized, setIsGoalsInitialized] = useState(false);
-  
+
   // Form states
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('food');
   const [note, setNote] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  
+
   // Goal form states
   const [goalName, setGoalName] = useState('');
   const [goalTarget, setGoalTarget] = useState('');
   const [goalCurrent, setGoalCurrent] = useState('');
   const [goalDeadline, setGoalDeadline] = useState('');
+  const [goalMonthlySavings, setGoalMonthlySavings] = useState('');
   const [goalIcon, setGoalIcon] = useState('target');
-  
+
   // Filter
-  const [filterPeriod, setFilterPeriod] = useState<'today' | 'week' | 'month' | 'all'>('all');
+  const [filterPeriod, setFilterPeriod] = useState<
+    'today' | 'week' | 'month' | 'all'
+  >('all');
 
   useEffect(() => {
     setIsLoading(false);
@@ -166,7 +169,7 @@ export default function SpendSmart() {
     };
 
     setExpenses([newExpense, ...expenses]);
-    
+
     // Reset form
     setAmount('');
     setCategory('food');
@@ -177,7 +180,7 @@ export default function SpendSmart() {
 
   const deleteExpense = (id: number) => {
     if (confirm('Hapus pengeluaran ini?')) {
-      setExpenses(expenses.filter(e => e.id !== id));
+      setExpenses(expenses.filter((e) => e.id !== id));
     }
   };
 
@@ -188,25 +191,34 @@ export default function SpendSmart() {
       return;
     }
 
-    if (!goalDeadline) {
-      alert('Pilih tanggal deadline!');
+    const hasMonthlySavings =
+      goalMonthlySavings && parseFloat(goalMonthlySavings) > 0;
+    const hasDeadline = goalDeadline;
+
+    if (!hasMonthlySavings && !hasDeadline) {
+      alert('Masukkan deadline atau target monthly savings!');
       return;
     }
 
     if (editingGoal) {
       // Update existing goal
-      setSavingGoals(savingGoals.map(g => 
-        g.id === editingGoal.id 
-          ? {
-              ...g,
-              name: goalName,
-              targetAmount: parseFloat(goalTarget),
-              currentAmount: parseFloat(goalCurrent) || 0,
-              deadline: goalDeadline,
-              icon: goalIcon,
-            }
-          : g
-      ));
+      setSavingGoals(
+        savingGoals.map((g) =>
+          g.id === editingGoal.id
+            ? {
+                ...g,
+                name: goalName,
+                targetAmount: parseFloat(goalTarget),
+                currentAmount: parseFloat(goalCurrent) || 0,
+                deadline: goalDeadline,
+                monthlySavings: hasMonthlySavings
+                  ? parseFloat(goalMonthlySavings)
+                  : undefined,
+                icon: goalIcon,
+              }
+            : g,
+        ),
+      );
     } else {
       // Add new goal
       const newGoal: SavingGoal = {
@@ -215,6 +227,9 @@ export default function SpendSmart() {
         targetAmount: parseFloat(goalTarget),
         currentAmount: parseFloat(goalCurrent) || 0,
         deadline: goalDeadline,
+        monthlySavings: hasMonthlySavings
+          ? parseFloat(goalMonthlySavings)
+          : undefined,
         icon: goalIcon,
         priority: 'medium',
         createdAt: new Date().toISOString(),
@@ -228,6 +243,7 @@ export default function SpendSmart() {
     setGoalTarget('');
     setGoalCurrent('');
     setGoalDeadline('');
+    setGoalMonthlySavings('');
     setGoalIcon('target');
     setEditingGoal(null);
     setShowGoalForm(false);
@@ -235,7 +251,7 @@ export default function SpendSmart() {
 
   const deleteGoal = (id: string) => {
     if (confirm('Hapus saving goal ini?')) {
-      setSavingGoals(savingGoals.filter(g => g.id !== id));
+      setSavingGoals(savingGoals.filter((g) => g.id !== id));
     }
   };
 
@@ -245,6 +261,7 @@ export default function SpendSmart() {
     setGoalTarget(goal.targetAmount.toString());
     setGoalCurrent(goal.currentAmount.toString());
     setGoalDeadline(goal.deadline);
+    setGoalMonthlySavings(goal.monthlySavings?.toString() || '');
     setGoalIcon(goal.icon);
     setShowGoalForm(true);
   };
@@ -281,23 +298,23 @@ export default function SpendSmart() {
     const daysLeft = calculateDaysLeft(goal.deadline);
     const monthsLeft = Math.max(daysLeft / 30, 0.1);
     const remaining = goal.targetAmount - goal.currentAmount;
-    
+
     // Raw calculations
     const rawMonthly = remaining / monthsLeft;
     const rawDaily = rawMonthly / 30;
-    
+
     // Rounded calculations
     const roundedMonthly = Math.ceil(rawMonthly / 1000) * 1000;
     const roundedDaily = Math.ceil(rawDaily / 1000) * 1000;
-    
+
     // Extra amounts
     const extraMonthly = roundedMonthly - rawMonthly;
     const extraDaily = roundedDaily - rawDaily;
-    
+
     // Total extra if saved consistently
     const totalExtraMonthly = extraMonthly * monthsLeft;
     const totalExtraDaily = extraDaily * daysLeft;
-    
+
     return {
       extraMonthly,
       extraDaily,
@@ -306,8 +323,55 @@ export default function SpendSmart() {
     };
   };
 
+  const calculateEstimatedDeadline = (
+    goal: SavingGoal,
+  ): { months: number; days: number; deadlineDate: string } => {
+    if (!goal.monthlySavings || goal.monthlySavings <= 0) {
+      return { months: 0, days: 0, deadlineDate: '' };
+    }
+
+    const remaining = goal.targetAmount - goal.currentAmount;
+    const monthsNeeded = Math.ceil(remaining / goal.monthlySavings);
+    const daysNeeded = Math.ceil(monthsNeeded * 30);
+
+    const now = new Date();
+    const deadlineDate = new Date(
+      now.getFullYear(),
+      now.getMonth() + monthsNeeded,
+      now.getDate(),
+    );
+
+    return {
+      months: monthsNeeded,
+      days: daysNeeded,
+      deadlineDate: deadlineDate.toISOString().split('T')[0],
+    };
+  };
+
+  const getDaysLeftFromDeadline = (deadline: string): number => {
+    if (!deadline) return 0;
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+    const diffTime = deadlineDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const formatMonthsToYearsAndMonths = (totalMonths: number): string => {
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+
+    if (years === 0) {
+      return `${months} bulan`;
+    } else if (months === 0) {
+      return `${years} tahun`;
+    } else {
+      return `${years} tahun ${months} bulan`;
+    }
+  };
+
   const getGoalIcon = (iconId: string) => {
-    const iconData = GOAL_ICONS.find(i => i.id === iconId);
+    const iconData = GOAL_ICONS.find((i) => i.id === iconId);
     return iconData || GOAL_ICONS[GOAL_ICONS.length - 1];
   };
 
@@ -315,10 +379,10 @@ export default function SpendSmart() {
   const getFilteredExpenses = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    return expenses.filter(expense => {
+
+    return expenses.filter((expense) => {
       const expenseDate = new Date(expense.date);
-      
+
       switch (filterPeriod) {
         case 'today':
           return expenseDate >= today;
@@ -340,17 +404,23 @@ export default function SpendSmart() {
   const totalSpending = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   // Group by category
-  const spendingByCategory = filteredExpenses.reduce((acc, expense) => {
-    acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-    return acc;
-  }, {} as Record<string, number>);
+  const spendingByCategory = filteredExpenses.reduce(
+    (acc, expense) => {
+      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const getCategoryInfo = (categoryId: string) => {
-    return CATEGORIES.find(c => c.id === categoryId) || CATEGORIES[CATEGORIES.length - 1];
+    return (
+      CATEGORIES.find((c) => c.id === categoryId) ||
+      CATEGORIES[CATEGORIES.length - 1]
+    );
   };
 
   // Today's stats
-  const todayExpenses = expenses.filter(e => {
+  const todayExpenses = expenses.filter((e) => {
     const expenseDate = new Date(e.date);
     const today = new Date();
     return expenseDate.toDateString() === today.toDateString();
@@ -378,22 +448,22 @@ export default function SpendSmart() {
           <div className="flex flex-col gap-3 mb-6 sm:mb-8">
             <div className="flex items-center gap-3">
               <Wallet className="w-9 h-9 sm:w-10 sm:h-10 text-amber-600" />
-              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">Spend Smart</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-stone-800">
+                Spend Smart
+              </h1>
             </div>
             <div className="flex gap-2.5">
               <motion.a
                 whileTap={{ scale: 0.95 }}
                 href="/spend-smart/analytics"
-                className="flex-1 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 active:bg-emerald-100 lg:hover:bg-emerald-100 transition border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-emerald-300 flex items-center gap-2 justify-center touch-manipulation"
-              >
+                className="flex-1 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 active:bg-emerald-100 lg:hover:bg-emerald-100 transition border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-emerald-300 flex items-center gap-2 justify-center touch-manipulation">
                 <BarChart3 className="w-4 h-4" />
                 <span>Statistics</span>
               </motion.a>
               <motion.a
                 whileTap={{ scale: 0.95 }}
                 href="/"
-                className="flex-1 rounded-xl bg-stone-100 px-4 py-3 text-sm font-bold text-stone-700 active:bg-stone-200 lg:hover:bg-stone-200 transition border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 flex items-center gap-2 justify-center touch-manipulation"
-              >
+                className="flex-1 rounded-xl bg-stone-100 px-4 py-3 text-sm font-bold text-stone-700 active:bg-stone-200 lg:hover:bg-stone-200 transition border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 flex items-center gap-2 justify-center touch-manipulation">
                 <Home className="w-4 h-4" />
                 <span>Kembali</span>
               </motion.a>
@@ -406,23 +476,33 @@ export default function SpendSmart() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-linear-to-br from-amber-500 to-amber-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-amber-700 p-5 sm:p-6"
-            >
+              className="bg-linear-to-br from-amber-500 to-amber-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-amber-700 p-5 sm:p-6">
               <DollarSign className="w-8 h-8 mb-3 opacity-80" />
-              <div className="text-3xl sm:text-4xl font-bold mb-2">{formatMoney(todayTotal)}</div>
-              <div className="text-sm sm:text-base opacity-90 font-medium">Pengeluaran Hari Ini</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-2">
+                {formatMoney(todayTotal)}
+              </div>
+              <div className="text-sm sm:text-base opacity-90 font-medium">
+                Pengeluaran Hari Ini
+              </div>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-linear-to-br from-sky-500 to-sky-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-sky-700 p-5 sm:p-6"
-            >
+              className="bg-linear-to-br from-sky-500 to-sky-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-sky-700 p-5 sm:p-6">
               <TrendingUp className="w-8 h-8 mb-3 opacity-80" />
-              <div className="text-3xl sm:text-4xl font-bold mb-2">{formatMoney(totalSpending)}</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-2">
+                {formatMoney(totalSpending)}
+              </div>
               <div className="text-sm sm:text-base opacity-90 font-medium">
-                {filterPeriod === 'today' ? 'Hari Ini' : filterPeriod === 'week' ? '7 Hari' : filterPeriod === 'month' ? '30 Hari' : 'Total'}
+                {filterPeriod === 'today'
+                  ? 'Hari Ini'
+                  : filterPeriod === 'week'
+                    ? '7 Hari'
+                    : filterPeriod === 'month'
+                      ? '30 Hari'
+                      : 'Total'}
               </div>
             </motion.div>
 
@@ -430,11 +510,14 @@ export default function SpendSmart() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-linear-to-br from-emerald-500 to-emerald-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-emerald-700 p-5 sm:p-6"
-            >
+              className="bg-linear-to-br from-emerald-500 to-emerald-600 text-white rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-emerald-700 p-5 sm:p-6">
               <Calendar className="w-8 h-8 mb-3 opacity-80" />
-              <div className="text-3xl sm:text-4xl font-bold mb-2">{filteredExpenses.length}</div>
-              <div className="text-sm sm:text-base opacity-90 font-medium">Transaksi</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-2">
+                {filteredExpenses.length}
+              </div>
+              <div className="text-sm sm:text-base opacity-90 font-medium">
+                Transaksi
+              </div>
             </motion.div>
           </div>
 
@@ -443,12 +526,11 @@ export default function SpendSmart() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowAddForm(true)}
-              className="w-full rounded-xl bg-amber-600 px-6 py-4 text-base font-bold text-white active:bg-amber-700 lg:hover:bg-amber-700 transition border-t border-l border-r-[6px] border-b-[6px] border-amber-700 flex items-center gap-2 justify-center touch-manipulation"
-            >
+              className="w-full rounded-xl bg-amber-600 px-6 py-4 text-base font-bold text-white active:bg-amber-700 lg:hover:bg-amber-700 transition border-t border-l border-r-[6px] border-b-[6px] border-amber-700 flex items-center gap-2 justify-center touch-manipulation">
               <Plus className="w-5 h-5" />
               Tambah Pengeluaran
             </motion.button>
-            
+
             <div className="flex gap-2 overflow-x-auto pb-1">
               {(['all', 'today', 'week', 'month'] as const).map((period) => (
                 <motion.button
@@ -459,9 +541,14 @@ export default function SpendSmart() {
                     filterPeriod === period
                       ? 'bg-amber-600 text-white border-amber-700'
                       : 'bg-white text-stone-700 active:bg-stone-100'
-                  }`}
-                >
-                  {period === 'all' ? 'Semua' : period === 'today' ? 'Hari Ini' : period === 'week' ? '7 Hari' : '30 Hari'}
+                  }`}>
+                  {period === 'all'
+                    ? 'Semua'
+                    : period === 'today'
+                      ? 'Hari Ini'
+                      : period === 'week'
+                        ? '7 Hari'
+                        : '30 Hari'}
                 </motion.button>
               ))}
             </div>
@@ -475,21 +562,20 @@ export default function SpendSmart() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                onClick={() => setShowAddForm(false)}
-              >
+                onClick={() => setShowAddForm(false)}>
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-2xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-6 sm:p-8 max-w-md w-full"
-                >
+                  className="bg-white rounded-2xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-6 sm:p-8 max-w-md w-full">
                   <div className="flex items-center justify-between mb-5 sm:mb-6">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">Tambah Pengeluaran</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
+                      Tambah Pengeluaran
+                    </h2>
                     <button
                       onClick={() => setShowAddForm(false)}
-                      className="p-3 active:bg-stone-100 lg:hover:bg-stone-100 rounded-xl transition touch-manipulation"
-                    >
+                      className="p-3 active:bg-stone-100 lg:hover:bg-stone-100 rounded-xl transition touch-manipulation">
                       <X className="w-6 h-6" />
                     </button>
                   </div>
@@ -525,8 +611,7 @@ export default function SpendSmart() {
                               category === cat.id
                                 ? `${cat.color} text-white`
                                 : 'bg-white text-stone-700 active:bg-stone-100 lg:hover:bg-stone-100'
-                            }`}
-                          >
+                            }`}>
                             <cat.icon className="w-5 h-5" />
                             <span className="text-sm">{cat.name}</span>
                           </motion.button>
@@ -565,8 +650,7 @@ export default function SpendSmart() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={addExpense}
-                      className="w-full rounded-xl bg-amber-600 px-6 py-4 text-base font-bold text-white active:bg-amber-700 lg:hover:bg-amber-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation"
-                    >
+                      className="w-full rounded-xl bg-amber-600 px-6 py-4 text-base font-bold text-white active:bg-amber-700 lg:hover:bg-amber-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation">
                       Simpan
                     </motion.button>
                   </div>
@@ -586,15 +670,13 @@ export default function SpendSmart() {
                 onClick={() => {
                   setShowGoalForm(false);
                   setEditingGoal(null);
-                }}
-              >
+                }}>
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-white rounded-2xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
-                >
+                  className="bg-white rounded-2xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-6 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
                   <div className="flex items-center justify-between mb-5 sm:mb-6">
                     <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
                       {editingGoal ? 'Edit Saving Goal' : 'Tambah Saving Goal'}
@@ -604,8 +686,7 @@ export default function SpendSmart() {
                         setShowGoalForm(false);
                         setEditingGoal(null);
                       }}
-                      className="p-3 active:bg-stone-100 lg:hover:bg-stone-100 rounded-xl transition touch-manipulation"
-                    >
+                      className="p-3 active:bg-stone-100 lg:hover:bg-stone-100 rounded-xl transition touch-manipulation">
                       <X className="w-6 h-6" />
                     </button>
                   </div>
@@ -657,13 +738,33 @@ export default function SpendSmart() {
                     {/* Deadline */}
                     <div>
                       <label className="block text-base font-bold text-stone-700 mb-3">
-                        Target Deadline
+                        Target Deadline{' '}
+                        <span className="text-gray-500 font-normal">
+                          (Opsional)
+                        </span>
                       </label>
                       <input
                         type="date"
                         value={goalDeadline}
                         onChange={(e) => setGoalDeadline(e.target.value)}
                         className="w-full rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 px-5 py-4 text-base text-stone-900 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white touch-manipulation"
+                      />
+                    </div>
+
+                    {/* Monthly Savings */}
+                    <div>
+                      <label className="block text-base font-bold text-stone-700 mb-3">
+                        Target Monthly Savings (Rp){' '}
+                        <span className="text-gray-500 font-normal">
+                          (Opsional)
+                        </span>
+                      </label>
+                      <input
+                        type="number"
+                        value={goalMonthlySavings}
+                        onChange={(e) => setGoalMonthlySavings(e.target.value)}
+                        placeholder="500000"
+                        className="w-full rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 px-5 py-4 text-base text-stone-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white touch-manipulation"
                       />
                     </div>
 
@@ -684,8 +785,7 @@ export default function SpendSmart() {
                                 goalIcon === iconData.id
                                   ? 'bg-emerald-600 text-white'
                                   : 'bg-white text-stone-700 active:bg-stone-100 lg:hover:bg-stone-100'
-                              }`}
-                            >
+                              }`}>
                               <IconComponent className="w-6 h-6" />
                               <span className="text-xs">{iconData.label}</span>
                             </motion.button>
@@ -695,46 +795,125 @@ export default function SpendSmart() {
                     </div>
 
                     {/* Calculation Preview */}
-                    {goalTarget && goalDeadline && (
+                    {goalTarget && (goalDeadline || goalMonthlySavings) && (
                       <div className="bg-green-50 rounded-xl border-2 border-green-200 p-4">
-                        <div className="text-sm font-bold text-green-800 mb-3">💡 Target Saving (Dibulatkan):</div>
+                        <div className="text-sm font-bold text-green-800 mb-3">
+                          💡 Estimasi Target Saving:
+                        </div>
                         <div className="space-y-2">
                           {(() => {
-                            const daysLeft = calculateDaysLeft(goalDeadline);
-                            const monthsLeft = Math.max(daysLeft / 30, 0.1);
-                            const remaining = parseFloat(goalTarget) - (parseFloat(goalCurrent) || 0);
-                            const rawMonthly = remaining / monthsLeft;
-                            const rawDaily = rawMonthly / 30;
-                            const roundedMonthly = Math.ceil(rawMonthly / 1000) * 1000;
-                            const roundedDaily = Math.ceil(rawDaily / 1000) * 1000;
-                            const extraMonthly = roundedMonthly - rawMonthly;
-                            const extraDaily = roundedDaily - rawDaily;
-                            
-                            return (
-                              <>
-                                <div className="text-sm text-emerald-700">
-                                  <div className="font-bold mb-1">Per Bulan: {formatMoney(roundedMonthly)}</div>
-                                  {extraMonthly > 0 && (
-                                    <div className="text-xs text-blue-600 ml-4">
-                                      ↳ Lebih {formatMoney(extraMonthly)} dari target asli
+                            const remaining =
+                              parseFloat(goalTarget) -
+                              (parseFloat(goalCurrent) || 0);
+
+                            // If monthly savings is provided
+                            if (
+                              goalMonthlySavings &&
+                              parseFloat(goalMonthlySavings) > 0
+                            ) {
+                              const monthlySavings =
+                                parseFloat(goalMonthlySavings);
+                              const monthsNeeded = Math.ceil(
+                                remaining / monthlySavings,
+                              );
+                              const yearsMonthsFormat =
+                                formatMonthsToYearsAndMonths(monthsNeeded);
+                              const daysNeeded = Math.ceil(monthsNeeded * 30);
+
+                              const now = new Date();
+                              const estimatedDeadline = new Date(
+                                now.getFullYear(),
+                                now.getMonth() + monthsNeeded,
+                                now.getDate(),
+                              );
+                              const estimatedDeadlineStr =
+                                estimatedDeadline.toLocaleDateString('id-ID', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                });
+
+                              return (
+                                <>
+                                  <div className="text-sm text-emerald-700">
+                                    <div className="font-bold mb-1">
+                                      Target Bulanan:{' '}
+                                      {formatMoney(monthlySavings)}
                                     </div>
-                                  )}
-                                </div>
-                                <div className="text-sm text-emerald-700">
-                                  <div className="font-bold mb-1">Per Hari: {formatMoney(roundedDaily)}</div>
-                                  {extraDaily > 0 && (
-                                    <div className="text-xs text-blue-600 ml-4">
-                                      ↳ Lebih {formatMoney(extraDaily)} dari target asli
-                                    </div>
-                                  )}
-                                </div>
-                                {(extraMonthly > 0 || extraDaily > 0) && (
-                                  <div className="pt-2 mt-2 border-t border-green-300 text-xs text-blue-700">
-                                    <span className="font-bold">Bonus Total:</span> +{formatMoney(Math.max(extraMonthly * monthsLeft, extraDaily * daysLeft))}
                                   </div>
-                                )}
-                              </>
-                            );
+                                  <div className="text-sm text-emerald-700">
+                                    <div className="font-bold mb-1">
+                                      Estimasi Tercapai: {yearsMonthsFormat} (
+                                      {monthsNeeded} bulan)
+                                    </div>
+                                  </div>
+                                  <div className="bg-blue-100 rounded-lg p-2 mt-2 border border-blue-300">
+                                    <div className="text-xs text-blue-800 font-bold">
+                                      📅 Target Goal pada:{' '}
+                                      <span className="text-sm text-blue-900">
+                                        {estimatedDeadlineStr}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            }
+
+                            // If only deadline is provided
+                            if (goalDeadline) {
+                              const daysLeft =
+                                getDaysLeftFromDeadline(goalDeadline);
+                              const monthsLeft = Math.max(daysLeft / 30, 0.1);
+                              const rawMonthly = remaining / monthsLeft;
+                              const rawDaily = rawMonthly / 30;
+                              const roundedMonthly =
+                                Math.ceil(rawMonthly / 1000) * 1000;
+                              const roundedDaily =
+                                Math.ceil(rawDaily / 1000) * 1000;
+                              const extraMonthly = roundedMonthly - rawMonthly;
+                              const extraDaily = roundedDaily - rawDaily;
+
+                              return (
+                                <>
+                                  <div className="text-sm text-emerald-700">
+                                    <div className="font-bold mb-1">
+                                      Per Bulan: {formatMoney(roundedMonthly)}
+                                    </div>
+                                    {extraMonthly > 0 && (
+                                      <div className="text-xs text-blue-600 ml-4">
+                                        ↳ Lebih {formatMoney(extraMonthly)} dari
+                                        target asli
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-sm text-emerald-700">
+                                    <div className="font-bold mb-1">
+                                      Per Hari: {formatMoney(roundedDaily)}
+                                    </div>
+                                    {extraDaily > 0 && (
+                                      <div className="text-xs text-blue-600 ml-4">
+                                        ↳ Lebih {formatMoney(extraDaily)} dari
+                                        target asli
+                                      </div>
+                                    )}
+                                  </div>
+                                  {(extraMonthly > 0 || extraDaily > 0) && (
+                                    <div className="pt-2 mt-2 border-t border-green-300 text-xs text-blue-700">
+                                      <span className="font-bold">
+                                        Bonus Total:
+                                      </span>{' '}
+                                      +
+                                      {formatMoney(
+                                        Math.max(
+                                          extraMonthly * monthsLeft,
+                                          extraDaily * daysLeft,
+                                        ),
+                                      )}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            }
                           })()}
                         </div>
                       </div>
@@ -744,8 +923,7 @@ export default function SpendSmart() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={addOrUpdateGoal}
-                      className="w-full rounded-xl bg-emerald-600 px-6 py-4 text-base font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation"
-                    >
+                      className="w-full rounded-xl bg-emerald-600 px-6 py-4 text-base font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 touch-manipulation">
                       {editingGoal ? 'Update Goal' : 'Buat Goal'}
                     </motion.button>
                   </div>
@@ -755,13 +933,14 @@ export default function SpendSmart() {
           </AnimatePresence>
 
           {/* Saving Goals Section */}
-          {savingGoals.filter(g => g.status === 'active').length > 0 && (
+          {savingGoals.filter((g) => g.status === 'active').length > 0 && (
             <div className="bg-linear-to-br from-green-50 to-emerald-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-5 sm:p-6 mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <Target className="w-6 h-6 text-green-600" />
                   <h2 className="text-2xl sm:text-3xl font-bold text-stone-800">
-                    Saving Goals ({savingGoals.filter(g => g.status === 'active').length})
+                    Saving Goals (
+                    {savingGoals.filter((g) => g.status === 'active').length})
                   </h2>
                 </div>
                 <motion.button
@@ -772,11 +951,11 @@ export default function SpendSmart() {
                     setGoalTarget('');
                     setGoalCurrent('');
                     setGoalDeadline('');
+                    setGoalMonthlySavings('');
                     setGoalIcon('target');
                     setShowGoalForm(true);
                   }}
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-2 touch-manipulation"
-                >
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 flex items-center gap-2 touch-manipulation">
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Tambah</span>
                 </motion.button>
@@ -784,46 +963,98 @@ export default function SpendSmart() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                 {savingGoals
-                  .filter(goal => goal.status === 'active')
+                  .filter((goal) => goal.status === 'active')
                   .map((goal) => {
                     const IconComponent = getGoalIcon(goal.icon).icon;
                     const progress = calculateGoalProgress(goal);
-                    const daysLeft = calculateDaysLeft(goal.deadline);
-                    const monthlyTarget = calculateMonthlyTarget(goal);
-                    const dailyTarget = calculateDailyTarget(goal);
                     const remaining = goal.targetAmount - goal.currentAmount;
-                    const extraSavings = calculateExtraSavings(goal);
+
+                    // Check if goal has monthly savings target
+                    const hasMonthlyTarget =
+                      goal.monthlySavings && goal.monthlySavings > 0;
+                    let daysLeft = 0;
+                    let monthlyTarget = 0;
+                    let dailyTarget = 0;
+                    let extraSavings = {
+                      extraMonthly: 0,
+                      extraDaily: 0,
+                      totalExtraMonthly: 0,
+                      totalExtraDaily: 0,
+                    };
+                    let estimatedDeadline = '';
+                    let monthsUntilGoal = 0;
+
+                    if (hasMonthlyTarget) {
+                      // Calculate based on monthly savings
+                      monthsUntilGoal = Math.ceil(
+                        remaining / goal.monthlySavings,
+                      );
+                      const now = new Date();
+                      const deadline = new Date(
+                        now.getFullYear(),
+                        now.getMonth() + monthsUntilGoal,
+                        now.getDate(),
+                      );
+                      const yearsMonthsFormat =
+                        formatMonthsToYearsAndMonths(monthsUntilGoal);
+                      estimatedDeadline = deadline.toLocaleDateString('id-ID', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      });
+                    } else if (goal.deadline) {
+                      // Calculate based on deadline
+                      daysLeft = calculateDaysLeft(goal.deadline);
+                      monthlyTarget = calculateMonthlyTarget(goal);
+                      dailyTarget = calculateDailyTarget(goal);
+                      extraSavings = calculateExtraSavings(goal);
+                    }
 
                     return (
                       <motion.div
                         key={goal.id}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-5"
-                      >
+                        className="bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-5">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <div className="p-3 bg-green-100 rounded-xl border-2 border-stone-300">
                               <IconComponent className="w-6 h-6 text-green-600" />
                             </div>
                             <div>
-                              <h3 className="font-bold text-lg text-stone-800">{goal.name}</h3>
+                              <h3 className="font-bold text-lg text-stone-800">
+                                {goal.name}
+                              </h3>
                               <div className="text-sm text-stone-600">
-                                {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Deadline terlewat'}
+                                {hasMonthlyTarget ? (
+                                  <>
+                                    Estimasi tercapai:{' '}
+                                    {formatMonthsToYearsAndMonths(
+                                      monthsUntilGoal,
+                                    )}{' '}
+                                    ({monthsUntilGoal} bulan)
+                                  </>
+                                ) : goal.deadline ? (
+                                  <>
+                                    {daysLeft > 0
+                                      ? `${daysLeft} hari lagi`
+                                      : 'Deadline terlewat'}
+                                  </>
+                                ) : (
+                                  <>Tidak ada deadline</>
+                                )}
                               </div>
                             </div>
                           </div>
                           <div className="flex gap-2">
                             <button
                               onClick={() => editGoal(goal)}
-                              className="p-2 rounded-lg active:bg-stone-100 lg:hover:bg-stone-100 transition touch-manipulation"
-                            >
+                              className="p-2 rounded-lg active:bg-stone-100 lg:hover:bg-stone-100 transition touch-manipulation">
                               <Edit className="w-5 h-5 text-stone-600" />
                             </button>
                             <button
                               onClick={() => deleteGoal(goal.id)}
-                              className="p-2 rounded-lg active:bg-red-50 lg:hover:bg-red-50 transition touch-manipulation"
-                            >
+                              className="p-2 rounded-lg active:bg-red-50 lg:hover:bg-red-50 transition touch-manipulation">
                               <Trash2 className="w-5 h-5 text-red-500" />
                             </button>
                           </div>
@@ -832,14 +1063,19 @@ export default function SpendSmart() {
                         {/* Progress */}
                         <div className="mb-4">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-bold text-stone-700">{Math.round(progress)}%</span>
-                            <span className="text-sm text-stone-600">{formatMoney(goal.currentAmount)} / {formatMoney(goal.targetAmount)}</span>
+                            <span className="text-sm font-bold text-stone-700">
+                              {Math.round(progress)}%
+                            </span>
+                            <span className="text-sm text-stone-600">
+                              {formatMoney(goal.currentAmount)} /{' '}
+                              {formatMoney(goal.targetAmount)}
+                            </span>
                           </div>
                           <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden border-2 border-stone-300">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${progress}%` }}
-                              transition={{ duration: 0.5, ease: "easeOut" }}
+                              transition={{ duration: 0.5, ease: 'easeOut' }}
                               className="h-full bg-linear-to-r from-green-500 to-emerald-500"
                             />
                           </div>
@@ -849,35 +1085,101 @@ export default function SpendSmart() {
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center justify-between">
                             <span className="text-stone-600">Sisa:</span>
-                            <span className="font-bold text-stone-800">{formatMoney(remaining)}</span>
+                            <span className="font-bold text-stone-800">
+                              {formatMoney(remaining)}
+                            </span>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-stone-600">Target/Bulan:</span>
-                            <span className="font-bold text-green-600">{formatMoney(monthlyTarget)}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-stone-600">Target/Hari:</span>
-                            <span className="font-bold text-green-600">{formatMoney(dailyTarget)}</span>
-                          </div>
+                          {hasMonthlyTarget ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <span className="text-stone-600">
+                                  Target/Bulan:
+                                </span>
+                                <span className="font-bold text-green-600">
+                                  {formatMoney(goal.monthlySavings)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-stone-600">
+                                  Bulan sampai tercapai:
+                                </span>
+                                <span className="font-bold text-green-600">
+                                  {monthsUntilGoal} bulan
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-stone-600">
+                                  Target pada:
+                                </span>
+                                <span className="font-bold text-blue-600 text-xs">
+                                  {estimatedDeadline}
+                                </span>
+                              </div>
+                            </>
+                          ) : goal.deadline ? (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <span className="text-stone-600">
+                                  Target/Bulan:
+                                </span>
+                                <span className="font-bold text-green-600">
+                                  {formatMoney(monthlyTarget)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-stone-600">
+                                  Target/Hari:
+                                </span>
+                                <span className="font-bold text-green-600">
+                                  {formatMoney(dailyTarget)}
+                                </span>
+                              </div>
+                            </>
+                          ) : null}
                         </div>
 
                         {/* Extra Savings Info */}
-                        {(extraSavings.extraMonthly > 0 || extraSavings.extraDaily > 0) && (
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
-                            <div className="text-xs font-bold text-blue-800 mb-2">💡 Bonus Savings:</div>
-                            <div className="space-y-1 text-xs text-blue-700">
-                              {extraSavings.extraMonthly > 0 && (
-                                <div>Bulanan: <span className="font-bold">+{formatMoney(extraSavings.extraMonthly)}</span> lebih</div>
-                              )}
-                              {extraSavings.extraDaily > 0 && (
-                                <div>Harian: <span className="font-bold">+{formatMoney(extraSavings.extraDaily)}</span> lebih</div>
-                              )}
-                              <div className="pt-1 mt-1 border-t border-blue-300">
-                                Total Bonus: <span className="font-bold text-blue-900">+{formatMoney(Math.max(extraSavings.totalExtraMonthly, extraSavings.totalExtraDaily))}</span>
+                        {goal.deadline &&
+                          (extraSavings.extraMonthly > 0 ||
+                            extraSavings.extraDaily > 0) && (
+                            <div className="mt-3 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
+                              <div className="text-xs font-bold text-blue-800 mb-2">
+                                💡 Bonus Savings:
+                              </div>
+                              <div className="space-y-1 text-xs text-blue-700">
+                                {extraSavings.extraMonthly > 0 && (
+                                  <div>
+                                    Bulanan:{' '}
+                                    <span className="font-bold">
+                                      +{formatMoney(extraSavings.extraMonthly)}
+                                    </span>{' '}
+                                    lebih
+                                  </div>
+                                )}
+                                {extraSavings.extraDaily > 0 && (
+                                  <div>
+                                    Harian:{' '}
+                                    <span className="font-bold">
+                                      +{formatMoney(extraSavings.extraDaily)}
+                                    </span>{' '}
+                                    lebih
+                                  </div>
+                                )}
+                                <div className="pt-1 mt-1 border-t border-blue-300">
+                                  Total Bonus:{' '}
+                                  <span className="font-bold text-blue-900">
+                                    +
+                                    {formatMoney(
+                                      Math.max(
+                                        extraSavings.totalExtraMonthly,
+                                        extraSavings.totalExtraDaily,
+                                      ),
+                                    )}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
                         {/* Status Badge */}
                         <div className="mt-4 pt-4 border-t-2 border-gray-200">
@@ -885,7 +1187,9 @@ export default function SpendSmart() {
                             <div className="bg-green-100 text-emerald-700 px-3 py-2 rounded-lg text-sm font-bold text-center border-2 border-green-300">
                               🎉 Goal Tercapai!
                             </div>
-                          ) : daysLeft <= 0 ? (
+                          ) : !hasMonthlyTarget &&
+                            goal.deadline &&
+                            daysLeft <= 0 ? (
                             <div className="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-bold text-center border-2 border-red-300">
                               ⚠️ Deadline Terlewat
                             </div>
@@ -907,12 +1211,11 @@ export default function SpendSmart() {
           )}
 
           {/* Add Goal Button (when no goals) */}
-          {savingGoals.filter(g => g.status === 'active').length === 0 && (
+          {savingGoals.filter((g) => g.status === 'active').length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-linear-to-br from-green-50 to-emerald-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-8 text-center mb-6 sm:mb-8"
-            >
+              className="bg-linear-to-br from-green-50 to-emerald-50 rounded-xl border-t-2 border-l-2 border-r-[6px] border-b-[6px] border-stone-800 p-8 text-center mb-6 sm:mb-8">
               <Target className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
               <h3 className="text-xl sm:text-2xl font-bold text-stone-800 mb-2">
                 Belum Ada Saving Goal
@@ -922,9 +1225,17 @@ export default function SpendSmart() {
               </p>
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowGoalForm(true)}
-                className="rounded-xl bg-emerald-600 px-6 py-4 text-base font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 inline-flex items-center gap-2 touch-manipulation"
-              >
+                onClick={() => {
+                  setEditingGoal(null);
+                  setGoalName('');
+                  setGoalTarget('');
+                  setGoalCurrent('');
+                  setGoalDeadline('');
+                  setGoalMonthlySavings('');
+                  setGoalIcon('target');
+                  setShowGoalForm(true);
+                }}
+                className="rounded-xl bg-emerald-600 px-6 py-4 text-base font-bold text-white active:bg-emerald-700 lg:hover:bg-emerald-700 transition border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 inline-flex items-center gap-2 touch-manipulation">
                 <Plus className="w-5 h-5" />
                 Buat Saving Goal Pertama
               </motion.button>
@@ -936,7 +1247,7 @@ export default function SpendSmart() {
             <h2 className="text-2xl sm:text-3xl font-bold text-stone-800 mb-5">
               Riwayat Pengeluaran
             </h2>
-            
+
             {filteredExpenses.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800">
                 <Wallet className="w-20 h-20 text-gray-300 mx-auto mb-5" />
@@ -949,30 +1260,37 @@ export default function SpendSmart() {
                 {filteredExpenses.map((expense) => {
                   const catInfo = getCategoryInfo(expense.category);
                   const CategoryIcon = catInfo.icon;
-                  
+
                   return (
                     <motion.div
                       key={expense.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-5 flex items-start gap-4"
-                    >
+                      className="bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-5 flex items-start gap-4">
                       <div className="flex items-start gap-4 flex-1">
-                        <div className={`${catInfo.color} p-3 rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800`}>
+                        <div
+                          className={`${catInfo.color} p-3 rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800`}>
                           <CategoryIcon className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-bold text-base text-stone-800">{catInfo.name}</span>
+                            <span className="font-bold text-base text-stone-800">
+                              {catInfo.name}
+                            </span>
                             <span className="text-sm text-stone-500">
-                              {new Date(expense.date).toLocaleDateString('id-ID', {
-                                day: 'numeric',
-                                month: 'short',
-                              })}
+                              {new Date(expense.date).toLocaleDateString(
+                                'id-ID',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                },
+                              )}
                             </span>
                           </div>
                           {expense.note && (
-                            <p className="text-sm text-stone-600 mb-2">{expense.note}</p>
+                            <p className="text-sm text-stone-600 mb-2">
+                              {expense.note}
+                            </p>
                           )}
                           <div className="font-bold text-xl text-stone-900">
                             {formatMoney(expense.amount)}
@@ -982,8 +1300,7 @@ export default function SpendSmart() {
                       <motion.button
                         whileTap={{ scale: 0.9 }}
                         onClick={() => deleteExpense(expense.id)}
-                        className="p-3 active:bg-red-100 lg:hover:bg-red-100 rounded-xl transition text-red-500 touch-manipulation"
-                      >
+                        className="p-3 active:bg-red-100 lg:hover:bg-red-100 rounded-xl transition text-red-500 touch-manipulation">
                         <Trash2 className="w-6 h-6" />
                       </motion.button>
                     </motion.div>
@@ -1005,17 +1322,19 @@ export default function SpendSmart() {
                   const catInfo = getCategoryInfo(catId);
                   const CategoryIcon = catInfo.icon;
                   const percentage = (amount / totalSpending) * 100;
-                  
+
                   return (
                     <div
                       key={catId}
-                      className="bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-5"
-                    >
+                      className="bg-white rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800 p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className={`${catInfo.color} p-2.5 rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800`}>
+                        <div
+                          className={`${catInfo.color} p-2.5 rounded-xl border-t-2 border-l-2 border-r-8 border-b-8 border-stone-800`}>
                           <CategoryIcon className="w-5 h-5 text-white" />
                         </div>
-                        <span className="text-sm font-bold text-stone-800">{catInfo.name}</span>
+                        <span className="text-sm font-bold text-stone-800">
+                          {catInfo.name}
+                        </span>
                       </div>
                       <div className="text-xl sm:text-2xl font-bold text-stone-900 mb-2">
                         {formatMoney(amount)}
@@ -1034,5 +1353,3 @@ export default function SpendSmart() {
     </PageTransition>
   );
 }
-
-
