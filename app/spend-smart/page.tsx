@@ -331,7 +331,7 @@ export default function SpendSmart() {
     }
 
     const remaining = goal.targetAmount - goal.currentAmount;
-    const monthsNeeded = Math.ceil(remaining / goal.monthlySavings);
+    const monthsNeeded = Math.ceil(remaining / goal.monthlySavings!);
     const daysNeeded = Math.ceil(monthsNeeded * 30);
 
     const now = new Date();
@@ -987,7 +987,7 @@ export default function SpendSmart() {
                     if (hasMonthlyTarget) {
                       // Calculate based on monthly savings
                       monthsUntilGoal = Math.ceil(
-                        remaining / goal.monthlySavings,
+                        remaining / goal.monthlySavings!,
                       );
                       const now = new Date();
                       const deadline = new Date(
@@ -1096,7 +1096,7 @@ export default function SpendSmart() {
                                   Target/Bulan:
                                 </span>
                                 <span className="font-bold text-green-600">
-                                  {formatMoney(goal.monthlySavings)}
+                                  {formatMoney(goal.monthlySavings!)}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between">
