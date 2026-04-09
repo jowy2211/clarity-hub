@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Github } from 'lucide-react';
+import { GitBranch } from 'lucide-react';
 
 export default function GitHubBadge() {
   return (
@@ -14,10 +14,11 @@ export default function GitHubBadge() {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
       whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <Github className="w-5 h-5" />
-      <span className="font-medium text-sm hidden sm:inline">Star on GitHub</span>
+      whileTap={{ scale: 0.95 }}>
+      <GitBranch className="w-5 h-5" />
+      <span className="font-medium text-sm hidden sm:inline">
+        Star on GitHub
+      </span>
     </motion.a>
   );
 }
